@@ -1,5 +1,11 @@
-import editor from '../src/index.js';
+import editor from '../src/editor.js';
 
-document.addEventListener('alpine:init', () => {
-    window.Alpine.plugin(editor);
-});
+(function () {
+    function editorBundle(Alpine) {
+        Alpine.plugin(editor);
+    }
+
+    document.addEventListener('alpine:init', () => {
+        Alpine.plugin(editorBundle);
+    });
+})();

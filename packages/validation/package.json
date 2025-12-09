@@ -1,6 +1,6 @@
 {
   "name": "@vkm-js/validation",
-  "version": "1.0.11",
+  "version": "1.1.0",
   "description": "An Alpinejs validation that accepts and handles simple Laravel rules and validates in the frontend.",
   "homepage": "https://github.com/vmphobos",
   "repository": {
