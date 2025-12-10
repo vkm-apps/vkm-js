@@ -2,10 +2,10 @@
   "name": "@vkm-js/modal",
   "version": "1.1.1",
   "description": "An Alpinejs modal plugin.",
-  "homepage": "https://github.com/vmphobos",
+  "homepage": "https://github.com/vkm-apps",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vmphobos/vkm-js.git"
+    "url": "git+https://github.com/vkm-apps/vkm-js.git"
   },
   "author": "Vasilis Milopoulos",
   "license": "MIT",
