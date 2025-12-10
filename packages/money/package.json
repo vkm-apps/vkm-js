@@ -1,6 +1,6 @@
 {
   "name": "@vkm-js/money",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "An Alpinejs money helper to convert an amount to the right currency format.",
   "homepage": "https://github.com/vkm-apps",
   "repository": {
