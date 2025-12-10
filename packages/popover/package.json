@@ -1,6 +1,6 @@
 {
   "name": "@vkm-js/popover",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "An Alpinejs plugin to add a x-popover on any tag element.",
   "homepage": "https://github.com/vmphobos",
   "repository": {

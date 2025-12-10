@@ -66,7 +66,7 @@ export default function (Alpine) {
         dropdownEl.setAttribute('x-show', 'open || keyboardTrigger');
 
         if (!modifiers.includes('custom')) {
-            dropdownEl.classList.add('absolute', 'mt-2', 'shadow-lg', 'bg-white/90', 'dark:bg-black/90', 'rounded-sm', 'flex', 'flex-col', 'w-full', 'min-w-72', 'z-1000', 'py-2');
+            dropdownEl.classList.add('absolute', 'mt-2', 'shadow-lg', 'backdrop-blur-lg', 'bg-white/70', 'dark:bg-black/70', 'rounded-sm', 'flex', 'flex-col', 'w-full', 'min-w-72', 'z-1000', 'py-2');
         }
         else {
             dropdownEl.classList.add('absolute', 'z-1000');

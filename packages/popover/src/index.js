@@ -40,8 +40,8 @@ export default function (Alpine) {
 
     // Default color classes if no modifier is found
     const defaultColorClasses = [
-        'text-dark', 'bg-white', 'border', 'border-gray-100',
-        'dark:bg-dark-900/90', 'dark:border-black/90', 'dark:text-white'
+        'text-black', 'bg-white', 'border', 'border-zinc-50',
+        'dark:bg-zinc-900/90', 'dark:border-black/50', 'dark:text-white'
     ];
 
     Alpine.data('popover', (isHoverable) => ({

@@ -7,8 +7,6 @@ export default function videoModule(editorModule) {
         videoTitle: '',
         customClasses: '',
         customStyles: '',
-        fullWidth: false,
-        responsive: false,
 
         insert() {
             const selection = window.getSelection();
@@ -62,13 +60,7 @@ export default function videoModule(editorModule) {
 
             // Apply Tailwind classes and custom styles
             let classes = this.customClasses || '';
-            if (this.fullWidth) {
-                classes += ' w-full';
-            }
 
-            if (this.responsive) {
-                classes += ' aspect-video';
-            }
             if (classes) {
                 iframe.className = classes;
             }
@@ -90,8 +82,6 @@ export default function videoModule(editorModule) {
             this.videoTitle = '';
             this.customClasses = '';
             this.customStyles = '';
-            this.fullWidth = false;
-            this.responsive = false;
         }
     }
 }
