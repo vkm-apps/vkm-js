@@ -1,6 +1,6 @@
 {
   "name": "@vkm-js/animate",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "An Alpinejs to animate things with Intersection Observer.",
   "homepage": "https://github.com/vkm-apps",
   "repository": {

@@ -15,7 +15,16 @@ export default function editorPlugin(Alpine) {
         content: null,
 
         // Modules
-        modules: {},
+        modules: {
+            action: {},
+            color: {},
+            link: {},
+            image: {},
+            video: {},
+            selection: {},
+            cleanup: {},
+        },
+
         // Debounced save to Livewire
         save: Alpine.debounce(function () {
             const html = this.$refs.editor.innerHTML === '<br>' ? null : this.$refs.editor.innerHTML;
