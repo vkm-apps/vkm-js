@@ -127,11 +127,16 @@ export default function editorCleaner(editorModule) {
 
         // --- Main runner ---
         run() {
+            // Get the selection object from your helper
             const sel = selectionHelpers(editorModule.editor);
-            const range = sel.range();
-            if (!range) return "";
+            const range = sel.range(); // Get the current range
 
-            const editorText = editorModule.editor.textContent.replace(/\s+/g, ' ').trim();
+            // If there is no range or nothing is actually selected, return empty
+            if (!range || range.collapsed) {
+                return ""; // Nothing selected
+            }
+
+            const editorText = editorModule.editor?.textContent.replace(/\s+/g, ' ').trim();
            const selectionText = range.cloneContents().textContent.replace(/\s+/g, ' ').trim(); // into container
 
             const container = document.createElement("div");
@@ -140,7 +145,7 @@ export default function editorCleaner(editorModule) {
                 // Selection matches the whole editor
                 container.append(...Array.from(editorModule.editor.childNodes));
             } else {
-                if (sel.parent().textContent.replace(/\s+/g, ' ').trim() !== editorText) {
+                if (sel.parent()?.textContent.replace(/\s+/g, ' ').trim() !== editorText) {
                     container.appendChild(sel.parent());
                 }
                 else {

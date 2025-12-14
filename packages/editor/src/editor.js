@@ -15,15 +15,14 @@ export default function editorPlugin(Alpine) {
         content: null,
 
         // Modules
-        modules: {
-            action: {},
-            color: {},
-            link: {},
-            image: {},
-            video: {},
-            selection: {},
-            cleanup: {},
-        },
+
+        action: null,
+        color: null,
+        link: null,
+        image: null,
+        video: null,
+        selection: null,
+        cleanup: null,
 
         // Debounced save to Livewire
         save: Alpine.debounce(function () {
@@ -40,16 +39,16 @@ export default function editorPlugin(Alpine) {
         },
 
         loadModules() {
-            this.modules.selection = selectionHelpers(this);
-            this.modules.color = colorPickerModule(this);
-            this.modules.action = textActionsModule(this);
-            this.modules.image = imageModule(this);
-            this.modules.link = linkModule(this);
-            this.modules.video = videoModule(this);
-            this.modules.cleanup = cleanupModule(this);
+            this.selection = Alpine.reactive(selectionHelpers(this));
+            this.color = Alpine.reactive(colorPickerModule(this));
+            this.action = Alpine.reactive(textActionsModule(this));
+            this.image = Alpine.reactive(imageModule(this));
+            this.link = Alpine.reactive(linkModule(this));
+            this.video = Alpine.reactive(videoModule(this));
+            this.cleanup = Alpine.reactive(cleanupModule(this));
 
-            if (this.modules.link.init) {
-                this.modules.link.init(this.editor, this.$refs.linkBtn);
+            if (this.link.init) {
+                this.link.init(this.editor, this.$refs.linkBtn);
             }
         },
 
@@ -62,7 +61,7 @@ export default function editorPlugin(Alpine) {
             });
 
             document.addEventListener('selectionchange', () => {
-                this.modules.action.updateFormattingState();
+                this.action.updateFormattingState();
             });
 
             this.editor.addEventListener('paste', e => {
@@ -76,8 +75,8 @@ export default function editorPlugin(Alpine) {
             this.editor.addEventListener('keydown', e => {
                 if (e.key === 'Tab') {
                     e.preventDefault();
-                    if (this.modules.action.changeIndent) {
-                        this.modules.action.changeIndent(!e.shiftKey);
+                    if (this.action.changeIndent) {
+                        this.action.changeIndent(!e.shiftKey);
                     }
                 }
             });
@@ -88,13 +87,13 @@ export default function editorPlugin(Alpine) {
                 return;
             }
 
-            this.$refs.editor.addEventListener('click', e => this.modules.image.handleClick(e));
-            this.$refs.editor.addEventListener('dragstart', e => this.modules.image.handleDragStart(e));
-            this.$refs.editor.addEventListener('dragend', e => this.modules.image.handleDragEnd(e));
+            this.$refs.editor.addEventListener('click', e => this.image.handleClick(e));
+            this.$refs.editor.addEventListener('dragstart', e => this.image.handleDragStart(e));
+            this.$refs.editor.addEventListener('dragend', e => this.image.handleDragEnd(e));
             this.$refs.editor.addEventListener('keydown', e => {
                 if (e.key === 'Tab') {
                     e.preventDefault();
-                    this.modules.action.changeIndent(!e.shiftKey);
+                    this.action.changeIndent(!e.shiftKey);
                 }
             });
 

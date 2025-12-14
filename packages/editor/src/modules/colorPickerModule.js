@@ -194,21 +194,21 @@ export default function colorPickerModule(editorModule) {
                     <div class="flex items-center space-x-2">
                         <input
                             type="color"
-                            x-model="modules.color.currentColor"
+                            x-model="color.currentColor"
                             class="rounded-md w-1/2"
                         />
                         <span class="font-medium text-gray-500 text-sm"">Pick Color</span>
                     </div>
 
                     <div class="grid grid-cols-12 gap-0.5 mt-2">
-                        <template x-for="(palette, key) in modules.color.palettes" :key="key">
+                        <template x-for="(palette, key) in color.palettes" :key="key">
                             <div class="flex flex-col space-y-0.5">
                                 <template x-for="color in palette" :key="color">
                                     <button
                                         type="button"
                                         class="h-5 w-5 border border-gray-200 rounded-sm hover:cursor-pointer"
                                         :style="{ backgroundColor: color }"
-                                        @click="modules.color.currentColor = color"
+                                        @click="color.currentColor = color"
                                     ></button>
                                 </template>
                             </div>
@@ -216,7 +216,7 @@ export default function colorPickerModule(editorModule) {
                     </div>
 
                     <!-- Add Button -->
-                    <button type="button" class="mt-3 px-3 py-1 rounded-sm bg-blue-500 text-xs text-white hover:cursor-pointer hover:opacity-80" @click="modules.color.changeColor(), document.getElementById('color-picker').remove()">
+                    <button type="button" class="mt-3 px-3 py-1 rounded-sm bg-blue-500 text-xs text-white hover:cursor-pointer hover:opacity-80" @click="color.changeColor(), document.getElementById('color-picker').remove()">
                         Apply Color
                     </button>
 
