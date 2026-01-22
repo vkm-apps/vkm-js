@@ -7,10 +7,11 @@ import videoModule from './modules/videoModule';
 import cleanupModule from './modules/cleanupModule';
 
 export default function editorPlugin(Alpine) {
-    Alpine.data('editor', (id, model, $wire) => ({
+    Alpine.data('editor', (id, model, $wire, watchFor = null) => ({
         id,
-        model,
+        model: model,
         wire: $wire,
+        watchFor: watchFor,
         editor: null,
         content: null,
 
@@ -28,7 +29,7 @@ export default function editorPlugin(Alpine) {
         save: Alpine.debounce(function () {
             const html = this.$refs.editor.innerHTML === '<br>' ? null : this.$refs.editor.innerHTML;
             this.$wire.set(this.model, html, false);
-        }, 1000),
+        }, 500),
 
         init() {
             this.editor = this.$refs.editor;
@@ -36,6 +37,22 @@ export default function editorPlugin(Alpine) {
 
             this.loadModules();
             this.bindEvents();
+
+            // Support dynamic model changes like artists.dance that may change to artists.pop
+            if (this.watchFor) {
+                this.$watch(`$wire.${this.watchFor}`, (value) => {
+                    // Split model by dot
+                    const parts = this.model.split('.');
+                    // Replace the last part with the new value
+                    parts[parts.length - 1] = value;
+                    // Rebuild model string
+                    this.model = parts.join('.');
+
+                    // Update content from Livewire
+                    this.content = this.$wire.get(this.model);
+                    if (this.editor) this.editor.innerHTML = this.content ?? '';
+                });
+            }
         },
 
         loadModules() {
