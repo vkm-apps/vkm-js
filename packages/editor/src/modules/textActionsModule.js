@@ -457,26 +457,5 @@ export default function textActionsModule(editorModule) {
                 }
             }
         },
-
-
-        // --- Tables ---
-        insertTable(rows = 2, cols = 2) {
-            let tableHTML = '<table class="table-auto border-collapse w-full">';
-            tableHTML += '<thead><tr>';
-            for (let c = 0; c < cols; c++) {
-                tableHTML += `<th class="border px-2 py-1">Header ${c + 1}</th>`;
-            }
-            tableHTML += '</tr></thead><tbody>';
-            for (let r = 0; r < rows; r++) {
-                tableHTML += '<tr>';
-                for (let c = 0; c < cols; c++) {
-                    tableHTML += `<td class="border px-2 py-1">Row ${r + 1}, Cell ${c + 1}</td>`;
-                }
-                tableHTML += '</tr>';
-            }
-            tableHTML += '</tbody></table>';
-
-            this.insertHTML(tableHTML);
-        },
     };
 }

@@ -136,17 +136,13 @@ function pushToGitHub() {
     execSync(`git push origin ${repo.branch} --tags`, { stdio: 'inherit' });
 }
 
-// Helper to promisify runFromPackage, assuming it uses exec under the hood (you may need to adjust based on your utils)
+// Helper to run commands from a package directory
 function runFromPackageAsync(pkg, cmd) {
-    return new Promise((resolve, reject) => {
-        runFromPackage(pkg, cmd, (error, stdout, stderr) => {
-            if (error) {
-                console.error(chalk.red(`❌ Error publishing ${pkg}:`), stderr || error);
-                return reject(error);
-            }
-            console.log(stdout);
-            resolve();
-        });
+    return runFromPackage(pkg, cmd).then(stdout => {
+        if (stdout) console.log(stdout);
+    }).catch(error => {
+        console.error(chalk.red(`❌ Error publishing ${pkg}:`), error);
+        throw error;
     });
 }
 

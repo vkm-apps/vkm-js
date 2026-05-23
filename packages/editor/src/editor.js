@@ -5,6 +5,7 @@ import imageModule from './modules/imageModule';
 import linkModule from './modules/linkModule';
 import videoModule from './modules/videoModule';
 import cleanupModule from './modules/cleanupModule';
+import tableModule from './modules/tableModule';
 
 export default function editorPlugin(Alpine) {
     Alpine.data('editor', (id, model, $wire, watchFor = null) => ({
@@ -16,7 +17,6 @@ export default function editorPlugin(Alpine) {
         content: null,
 
         // Modules
-
         action: null,
         color: null,
         link: null,
@@ -24,6 +24,11 @@ export default function editorPlugin(Alpine) {
         video: null,
         selection: null,
         cleanup: null,
+
+        // Stored document-level handlers for cleanup
+        _docClickHandler: null,
+        _docScrollHandler: null,
+        _docEscHandler: null,
 
         // Debounced save to Livewire
         save: Alpine.debounce(function () {
@@ -36,7 +41,7 @@ export default function editorPlugin(Alpine) {
             this.content = this.wire.get(this.model);
 
             this.loadModules();
-            this.bindEvents();
+            this.bindDocumentListeners();
 
             // Support dynamic model changes like artists.dance that may change to artists.pop
             if (this.watchFor) {
@@ -53,6 +58,24 @@ export default function editorPlugin(Alpine) {
                     if (this.editor) this.editor.innerHTML = this.content ?? '';
                 });
             }
+
+            // Listen for selectionchange to track active formatting state
+            document.addEventListener('selectionchange', () => {
+                this.action.updateFormattingState();
+            });
+        },
+
+        destroy() {
+            // Remove global document listeners to prevent memory leaks
+            if (this._docClickHandler) {
+                document.removeEventListener('click', this._docClickHandler);
+            }
+            if (this._docScrollHandler) {
+                document.removeEventListener('scroll', this._docScrollHandler, true);
+            }
+            if (this._docEscHandler) {
+                document.removeEventListener('keydown', this._docEscHandler);
+            }
         },
 
         loadModules() {
@@ -62,6 +85,7 @@ export default function editorPlugin(Alpine) {
             this.image = Alpine.reactive(imageModule(this));
             this.link = Alpine.reactive(linkModule(this));
             this.video = Alpine.reactive(videoModule(this));
+            this.table = Alpine.reactive(tableModule(this));
             this.cleanup = Alpine.reactive(cleanupModule(this));
 
             if (this.link.init) {
@@ -69,57 +93,40 @@ export default function editorPlugin(Alpine) {
             }
         },
 
-        bindEvents() {
-            // Attach editor-specific listeners
-            this.attachEditorListeners();
-
-            Livewire.hook('morphed', ({el, component}) => {
-                this.attachEditorListeners();
-            });
-
-            document.addEventListener('selectionchange', () => {
-                this.action.updateFormattingState();
-            });
-
-            this.editor.addEventListener('paste', e => {
-                e.preventDefault();
-                const text = (e.clipboardData || window.clipboardData).getData('text/plain');
-
-                const sel = selectionHelpers(this.editor);
-                sel.insert(text);
-            });
-
-            this.editor.addEventListener('keydown', e => {
-                if (e.key === 'Tab') {
-                    e.preventDefault();
-                    if (this.action.changeIndent) {
-                        this.action.changeIndent(!e.shiftKey);
+        bindDocumentListeners() {
+            // Close table context menu on outside click
+            this._docClickHandler = (e) => {
+                if (this.table?.tableContext?.show) {
+                    const menu = document.getElementById(this.id + '_table_context_menu');
+                    if (!menu || !menu.contains(e.target)) {
+                        this.table.tableContext.show = false;
                     }
                 }
-            });
+            };
+
+            // Close table context menu on scroll
+            this._docScrollHandler = () => {
+                if (this.table?.tableContext?.show) {
+                    this.table.tableContext.show = false;
+                }
+            };
+
+            // Close table context menu on Escape
+            this._docEscHandler = (e) => {
+                if (e.key === 'Escape' && this.table?.tableContext?.show) {
+                    this.table.tableContext.show = false;
+                }
+            };
+
+            document.addEventListener('click', this._docClickHandler);
+            document.addEventListener('scroll', this._docScrollHandler, true);
+            document.addEventListener('keydown', this._docEscHandler);
         },
 
-        attachEditorListeners() {
-            if (!this.$refs.editor || !this.$refs.editor.id) {
-                return;
-            }
-
-            this.$refs.editor.addEventListener('click', e => this.image.handleClick(e));
-            this.$refs.editor.addEventListener('dragstart', e => this.image.handleDragStart(e));
-            this.$refs.editor.addEventListener('dragend', e => this.image.handleDragEnd(e));
-            this.$refs.editor.addEventListener('keydown', e => {
-                if (e.key === 'Tab') {
-                    e.preventDefault();
-                    this.action.changeIndent(!e.shiftKey);
-                }
-            });
-
-            // Clean paste (remove unwanted formatting)
-            this.$refs.editor.addEventListener('paste', e => {
-                e.preventDefault();
-                const text = (e.clipboardData || window.clipboardData).getData('text/plain');
-                document.execCommand('insertText', false, text);
-            });
+        // Called from Alpine @paste.prevent directive on the contenteditable
+        handlePaste(e) {
+            const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+            document.execCommand('insertText', false, text);
         },
     }));
 }

@@ -1,6 +1,6 @@
 # MIT License
 
-Copyright © 2024-2025 Vasilis Milopoulos and contributors
+Copyright © 2026 Vasilis Milopoulos and contributors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
