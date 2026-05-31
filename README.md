@@ -535,22 +535,6 @@ To add a new AlpineJS plugin:
    - `builds/module.js`: Entry point exports default function.
 4. Run `npm run build` to verify bundles are compiled in `dist/`.
 
-### Releasing a New Version
-To release package updates, run:
-```bash
-npm run release <version-number>
-# Example:
-npm run release 1.1.8
-```
-
-The script `scripts/release.js` will guide you through:
-1. Version bumps across all package definitions.
-2. Compiling production bundle files.
-3. Committing versioned changes and establishing git tags.
-4. Pushing changes/tags to GitHub.
-5. Drafting public repository releases.
-6. Automatically publishing scoped npm packages.
-
 ---
 
 ## 📄 License
