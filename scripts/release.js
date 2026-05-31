@@ -23,6 +23,7 @@ if (!version) return exitWith('❌ You must pass a version number: npm run relea
 let packages = [
     'animate',
     'closeable',
+    'datepicker',
     'dropdown',
     'editor',
     'modal',
