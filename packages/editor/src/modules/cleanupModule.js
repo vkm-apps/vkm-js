@@ -5,6 +5,9 @@ export default function editorCleaner(editorModule) {
         sanitize(node) {
             if (node.nodeType === Node.TEXT_NODE) return;
 
+            // Sanitize children first (bottom-up) to prevent recursion bypasses
+            [...node.children].forEach(child => this.sanitize(child));
+
             const allowedTags = [
                 // Formatting
                 'P','BR','H1','H2','H3','STRONG','B','I','EM','U','CODE','PRE','A',
@@ -78,8 +81,6 @@ export default function editorCleaner(editorModule) {
                     "allow-scripts allow-same-origin allow-presentation allow-popups"
                 );
             }
-
-            [...node.children].forEach(child => this.sanitize(child));
         },
 
         stripStylesAndAttributes(node) {
@@ -137,28 +138,38 @@ export default function editorCleaner(editorModule) {
             }
 
             const editorText = editorModule.editor?.textContent.replace(/\s+/g, ' ').trim();
-           const selectionText = range.cloneContents().textContent.replace(/\s+/g, ' ').trim(); // into container
+            const selectionText = range.cloneContents().textContent.replace(/\s+/g, ' ').trim(); 
 
             const container = document.createElement("div");
 
             if (selectionText === editorText) {
                 // Selection matches the whole editor
-                container.append(...Array.from(editorModule.editor.childNodes));
+                container.innerHTML = editorModule.editor.innerHTML;
+                
+                this.sanitize(container);
+                this.stripStylesAndAttributes(container);
+                this.flattenTags(container);
+                this.removeFormattingTags(container);
+                
+                editorModule.editor.innerHTML = container.innerHTML;
+                editorModule.save();
             } else {
-                if (sel.parent()?.textContent.replace(/\s+/g, ' ').trim() !== editorText) {
-                    container.appendChild(sel.parent());
-                }
-                else {
-                    container.appendChild(range.cloneContents());
-                }
-
+                // For partial selections, we want to clean the cloned contents.
+                // If we want to clean the parent block (e.g. a paragraph or bold tag),
+                // we should expand the range or just clean the clone.
+                // We shouldn't move live nodes out of the editor before replacing.
+                
+                // Let's use the cloned contents to avoid breaking the range.
+                // If the user selected text inside a tag, they only clean the selected part.
+                container.appendChild(range.cloneContents());
+                
+                this.sanitize(container);
+                this.stripStylesAndAttributes(container);
+                this.flattenTags(container);
+                this.removeFormattingTags(container);
+                
+                this.replaceHtml(container.innerHTML);
             }
-
-            this.stripStylesAndAttributes(container);
-            this.flattenTags(container);
-            this.removeFormattingTags(container);
-
-            this.replaceHtml(container.innerHTML);
         },
 
         replaceHtml(html) {

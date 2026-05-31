@@ -82,35 +82,28 @@ async function bundleFile(packageName, file) {
     }
 }
 
-function build(options) {
+async function build(options) {
     options.define = options.define || {};
     options.define['process.env.NODE_ENV'] = process.argv.includes('--watch') ? `'development'` : `'production'`;
 
     const isWatch = process.argv.includes('--watch');
 
-    // Only add watch if esbuild supports it (>=0.8.0)
-    const esbuildVersion = require('esbuild/package.json').version;
-    const [major, minor] = esbuildVersion.split('.').map(Number);
-    const supportsWatch = major > 0 || (major === 0 && minor >= 8);
+    try {
+        const ctx = await esbuild.context({
+            logLevel: isWatch ? 'info' : 'silent',
+            ...options,
+        });
 
-    return esbuild.build({
-        logLevel: isWatch ? 'info' : 'silent',
-        ...(isWatch && supportsWatch ? {
-            watch: {
-                onRebuild(error, result) {
-                    if (error) {
-                        console.error('Watch build failed:', error);
-                    } else {
-                        console.log('Watch build succeeded');
-                    }
-                }
-            }
-        } : {}),
-        ...options,
-    }).catch((err) => {
+        if (isWatch) {
+            await ctx.watch();
+        } else {
+            await ctx.rebuild();
+            await ctx.dispose();
+        }
+    } catch (err) {
         console.error('Build failed:', err);
         process.exit(1);
-    });
+    }
 }
 
 function outputSize(packageName, file) {
@@ -133,3 +126,7 @@ function bytesToSize(bytes) {
 }
 
 module.exports = buildAll;
+
+if (require.main === module) {
+    buildAll();
+}

@@ -82,19 +82,24 @@ export default function linkModule(editorModule) {
             popup.className = 'absolute backdrop-blur-lg bg-white/90 dark:bg-black/90 p-4 shadow-lg border border-dark/5 rounded-md flex flex-col w-64 z-50';
             popup.innerHTML = `
                 <label class="${label_class}">URL:</label>
-                <input type="text" id="link-url" class="${input_class}" value="${this.linkUrl}">
+                <input type="text" id="link-url" class="${input_class}">
                 <label class="${label_class}">Text (Optional):</label>
-                <input type="text" id="link-text" class="${input_class}" value="${this.linkText}">
+                <input type="text" id="link-text" class="${input_class}">
                 <label class="${label_class}">Target:</label>
                 <select id="link-target" class="${input_class} px-2">
-                    <option value="_self" ${this.linkTarget === '_self' ? 'selected' : ''}>Same Window (_self)</option>
-                    <option value="_blank" ${this.linkTarget === '_blank' ? 'selected' : ''}>New Tab (_blank)</option>
-                    <option value="_parent" ${this.linkTarget === '_parent' ? 'selected' : ''}>Parent Frame (_parent)</option>
-                    <option value="_top" ${this.linkTarget === '_top' ? 'selected' : ''}>Top Window (_top)</option>
+                    <option value="_self">Same Window (_self)</option>
+                    <option value="_blank">New Tab (_blank)</option>
+                    <option value="_parent">Parent Frame (_parent)</option>
+                    <option value="_top">Top Window (_top)</option>
                 </select>
 
                 <button type="button" id="insert-link-btn" class="mt-3 bg-blue-500 text-sm text-white px-3 py-1 rounded-md hover:cursor-pointer hover:opacity-80">Insert Link</button>
             `;
+
+            // Assign values safely to prevent markup breakout and DOM XSS
+            popup.querySelector('#link-url').value = this.linkUrl || '';
+            popup.querySelector('#link-text').value = this.linkText || '';
+            popup.querySelector('#link-target').value = this.linkTarget || '_self';
 
             document.body.appendChild(popup);
             this.popupEl = popup;

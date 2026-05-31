@@ -4,14 +4,17 @@ export default function (Alpine) {
         const position = modifiers.find(m => ['top', 'bottom', 'left', 'right'].includes(m)) || 'top';
         const color = modifiers.find(m => Object.keys(colorMap).includes(m)) || 'dark';
 
-        let tooltipEl = null;
+        let tooltipWrapper = null;
 
         const showTooltip = () => {
-            if (tooltipEl) return;
+            if (tooltipWrapper) return;
 
-            el.classList.add('relative');
+            tooltipWrapper = document.createElement('div');
+            tooltipWrapper.style.position = 'absolute';
+            tooltipWrapper.style.zIndex = '99999';
+            tooltipWrapper.style.pointerEvents = 'none';
 
-            tooltipEl = document.createElement('div');
+            const tooltipEl = document.createElement('div');
             tooltipEl.className = `${baseTooltipClass} ${colorMap[color].tooltip} ${positionMap[position].tooltip}`;
 
             const content = document.createElement('div');
@@ -22,13 +25,30 @@ export default function (Alpine) {
             arrow.className = `absolute ${positionMap[position].arrow} ${colorMap[color].arrow}`;
             tooltipEl.appendChild(arrow);
 
-            el.appendChild(tooltipEl);
+            tooltipWrapper.appendChild(tooltipEl);
+            document.body.appendChild(tooltipWrapper);
+
+            const updatePosition = () => {
+                if (!tooltipWrapper) return;
+                const rect = el.getBoundingClientRect();
+                tooltipWrapper.style.top = (rect.top + window.scrollY) + 'px';
+                tooltipWrapper.style.left = (rect.left + window.scrollX) + 'px';
+                tooltipWrapper.style.width = rect.width + 'px';
+                tooltipWrapper.style.height = rect.height + 'px';
+            };
+            updatePosition();
+
+            window.addEventListener('scroll', updatePosition, true);
+            window.addEventListener('resize', updatePosition);
+            tooltipWrapper._updatePosition = updatePosition;
         };
 
         const hideTooltip = () => {
-            if (tooltipEl && tooltipEl.parentNode) {
-                tooltipEl.remove();
-                tooltipEl = null;
+            if (tooltipWrapper) {
+                window.removeEventListener('scroll', tooltipWrapper._updatePosition, true);
+                window.removeEventListener('resize', tooltipWrapper._updatePosition);
+                tooltipWrapper.remove();
+                tooltipWrapper = null;
             }
         };
 

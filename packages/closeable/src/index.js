@@ -35,7 +35,9 @@ export default function (Alpine) {
 
         const handleClick = () => {
             if (modifiers.includes('confirm')) {
-                confirm(() => el.remove(), 'You are about to close this window!');
+                if (window.confirm('You are about to close this window!')) {
+                    el.remove();
+                }
             } else if (modifiers.includes('remove')) {
                 const idx = modifiers.findIndex(i => i === 'remove');
                 const className = modifiers[idx + 1] || 'show';

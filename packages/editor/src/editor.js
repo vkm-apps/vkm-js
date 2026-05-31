@@ -15,6 +15,7 @@ export default function editorPlugin(Alpine) {
         watchFor: watchFor,
         editor: null,
         content: null,
+        activeDropdown: null,
 
         // Modules
         action: null,
@@ -24,11 +25,14 @@ export default function editorPlugin(Alpine) {
         video: null,
         selection: null,
         cleanup: null,
+        table: null,
 
-        // Stored document-level handlers for cleanup
-        _docClickHandler: null,
-        _docScrollHandler: null,
-        _docEscHandler: null,
+        // Stored handler refs for proper cleanup
+        _selectionChangeHandler: null,
+        _contextMenuClickHandler: null,
+        _contextMenuScrollHandler: null,
+        _contextMenuEscHandler: null,
+        _dropdownClickHandler: null,
 
         // Debounced save to Livewire
         save: Alpine.debounce(function () {
@@ -41,7 +45,7 @@ export default function editorPlugin(Alpine) {
             this.content = this.wire.get(this.model);
 
             this.loadModules();
-            this.bindDocumentListeners();
+            this.bindContextMenuListeners();
 
             // Support dynamic model changes like artists.dance that may change to artists.pop
             if (this.watchFor) {
@@ -59,22 +63,35 @@ export default function editorPlugin(Alpine) {
                 });
             }
 
-            // Listen for selectionchange to track active formatting state
-            document.addEventListener('selectionchange', () => {
-                this.action.updateFormattingState();
-            });
+            // Listen for selectionchange to track active formatting state.
+            // Stored ref so it can be properly removed in destroy().
+            this._selectionChangeHandler = () => this.action.updateFormattingState();
+            document.addEventListener('selectionchange', this._selectionChangeHandler);
         },
 
         destroy() {
-            // Remove global document listeners to prevent memory leaks
-            if (this._docClickHandler) {
-                document.removeEventListener('click', this._docClickHandler);
+            // Remove selectionchange listener
+            if (this._selectionChangeHandler) {
+                document.removeEventListener('selectionchange', this._selectionChangeHandler);
+                this._selectionChangeHandler = null;
             }
-            if (this._docScrollHandler) {
-                document.removeEventListener('scroll', this._docScrollHandler, true);
+
+            // Remove context menu document listeners
+            if (this._contextMenuClickHandler) {
+                document.removeEventListener('click', this._contextMenuClickHandler);
+                this._contextMenuClickHandler = null;
             }
-            if (this._docEscHandler) {
-                document.removeEventListener('keydown', this._docEscHandler);
+            if (this._contextMenuScrollHandler) {
+                document.removeEventListener('scroll', this._contextMenuScrollHandler, true);
+                this._contextMenuScrollHandler = null;
+            }
+            if (this._contextMenuEscHandler) {
+                document.removeEventListener('keydown', this._contextMenuEscHandler);
+                this._contextMenuEscHandler = null;
+            }
+            if (this._dropdownClickHandler) {
+                document.removeEventListener('click', this._dropdownClickHandler);
+                this._dropdownClickHandler = null;
             }
         },
 
@@ -93,34 +110,51 @@ export default function editorPlugin(Alpine) {
             }
         },
 
-        bindDocumentListeners() {
-            // Close table context menu on outside click
-            this._docClickHandler = (e) => {
-                if (this.table?.tableContext?.show) {
-                    const menu = document.getElementById(this.id + '_table_context_menu');
-                    if (!menu || !menu.contains(e.target)) {
-                        this.table.tableContext.show = false;
-                    }
+        bindContextMenuListeners() {
+            // Each handler is scoped to THIS editor's context menu via this.id.
+            // Using named refs (not @click.away) avoids cross-editor interference
+            // where Alpine's always-active document listeners on hidden elements
+            // can suppress right-click events in earlier editors on the page.
+
+            const getMenu = () => document.getElementById(this.id + '_table_context_menu');
+
+            // Close on outside click
+            this._contextMenuClickHandler = (e) => {
+                if (!this.table?.tableContext?.show) return;
+                const menu = getMenu();
+                if (!menu || !menu.contains(e.target)) {
+                    this.table.tableContext.show = false;
                 }
             };
 
-            // Close table context menu on scroll
-            this._docScrollHandler = () => {
+            // Close on scroll (context menu position would be stale)
+            this._contextMenuScrollHandler = () => {
                 if (this.table?.tableContext?.show) {
                     this.table.tableContext.show = false;
                 }
             };
 
-            // Close table context menu on Escape
-            this._docEscHandler = (e) => {
+            // Close on Escape
+            this._contextMenuEscHandler = (e) => {
                 if (e.key === 'Escape' && this.table?.tableContext?.show) {
                     this.table.tableContext.show = false;
                 }
             };
 
-            document.addEventListener('click', this._docClickHandler);
-            document.addEventListener('scroll', this._docScrollHandler, true);
-            document.addEventListener('keydown', this._docEscHandler);
+            // Close toolbar dropdowns on outside click
+            this._dropdownClickHandler = (e) => {
+                if (!this.activeDropdown) return;
+                const trigger = e.target.closest('[data-dropdown-trigger]');
+                const menu = e.target.closest('[data-dropdown-menu]');
+                if (!trigger && !menu) {
+                    this.activeDropdown = null;
+                }
+            };
+
+            document.addEventListener('click', this._contextMenuClickHandler);
+            document.addEventListener('scroll', this._contextMenuScrollHandler, true);
+            document.addEventListener('keydown', this._contextMenuEscHandler);
+            document.addEventListener('click', this._dropdownClickHandler);
         },
 
         // Called from Alpine @paste.prevent directive on the contenteditable

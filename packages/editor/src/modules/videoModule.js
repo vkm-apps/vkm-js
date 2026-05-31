@@ -25,13 +25,53 @@ export default function videoModule(editorModule) {
             let iframe;
 
             // Check if the input is a full iframe embed code
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = this.youtubeUrl.trim();
-            const pastedIframe = tempDiv.querySelector('iframe');
+            let pastedIframe = null;
+            const trimmedInput = this.youtubeUrl.trim();
+            if (trimmedInput.startsWith('<')) {
+                try {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(trimmedInput, 'text/html');
+                    pastedIframe = doc.querySelector('iframe');
+                } catch (e) {
+                    pastedIframe = null;
+                }
+            }
 
             if (pastedIframe) {
-                // Use the pasted iframe directly
-                iframe = pastedIframe;
+                const src = pastedIframe.getAttribute('src') || '';
+                const trustedSources = [
+                    'youtube.com',
+                    'youtu.be',
+                    'youtube-nocookie.com',
+                    'player.vimeo.com',
+                    'vimeo.com'
+                ];
+                let isTrusted = false;
+                try {
+                    const url = new URL(src, window.location.origin);
+                    isTrusted = trustedSources.some(domain => url.hostname === domain || url.hostname.endsWith('.' + domain));
+                } catch (e) {
+                    isTrusted = false;
+                }
+
+                if (!isTrusted) {
+                    alert('Invalid or untrusted video iframe source.');
+                    return;
+                }
+
+                // Create a clean new iframe to prevent smuggled event handlers or javascript execution
+                iframe = document.createElement('iframe');
+                iframe.src = src;
+
+                const width = pastedIframe.getAttribute('width');
+                const height = pastedIframe.getAttribute('height');
+                if (width) iframe.setAttribute('width', width);
+                if (height) iframe.setAttribute('height', height);
+
+                iframe.frameBorder = '0';
+                iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+                iframe.allowFullscreen = true;
+                iframe.referrerPolicy = 'strict-origin-when-cross-origin';
             } else {
                 // Create a new iframe
                 iframe = document.createElement('iframe');

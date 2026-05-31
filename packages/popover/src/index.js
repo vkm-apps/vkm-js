@@ -65,7 +65,39 @@ export default function (Alpine) {
         let { triggerEl, popoverEl, isHoverable, position, transition, colorClass } = getPopoverOptions(el, modifiers);
 
         if (expression) {
-            popoverEl.innerHTML = expression; // Can be HTML or text content
+            try {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(expression, 'text/html');
+
+                const clean = (node) => {
+                    if (node.nodeType === Node.TEXT_NODE) return;
+
+                    // Sanitize children first (bottom-up)
+                    [...node.children].forEach(clean);
+
+                    // Disallowed tags
+                    const disallowed = ['SCRIPT', 'IFRAME', 'OBJECT', 'EMBED', 'STYLE', 'META', 'LINK'];
+                    if (disallowed.includes(node.tagName)) {
+                        node.remove();
+                        return;
+                    }
+
+                    // Remove event handlers and javascript: URLs
+                    [...node.attributes].forEach(attr => {
+                        const name = attr.name.toLowerCase();
+                        if (name.startsWith('on')) {
+                            node.removeAttribute(attr.name);
+                        } else if ((name === 'href' || name === 'src') && attr.value.trim().toLowerCase().startsWith('javascript:')) {
+                            node.removeAttribute(attr.name);
+                        }
+                    });
+                };
+
+                [...doc.body.children].forEach(clean);
+                popoverEl.innerHTML = doc.body.innerHTML;
+            } catch (e) {
+                popoverEl.textContent = expression;
+            }
         }
 
         if (!triggerEl || !popoverEl) {
@@ -122,6 +154,7 @@ export default function (Alpine) {
 
         // Ensure Popover is positioned correctly and add the arrow
         Alpine.nextTick(() => {
+            document.body.appendChild(popoverEl);
             makeArrow(triggerEl, popoverEl, el.id, position, 'body', expression, colorClass);
         });
 
@@ -133,6 +166,7 @@ export default function (Alpine) {
             // Remove arrow element if exists
             const arrowEl = document.getElementById(`arrow-${el.id}`);
             if (arrowEl) arrowEl.remove();
+            if (popoverEl) popoverEl.remove();
         });
     });
 

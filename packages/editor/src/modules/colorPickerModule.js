@@ -170,8 +170,13 @@ export default function colorPickerModule(editorModule) {
         },
 
         openColorPicker(el, action) {
-            if (document.getElementById('color-picker')) {
-                return;
+            const existing = document.getElementById('color-picker');
+            if (existing) {
+                existing.remove();
+                if (this.colorElement === el && this.colorAction === action) {
+                    this.closeColorPicker();
+                    return;
+                }
             }
 
             // When a button is clicked, open the color picker
@@ -184,10 +189,16 @@ export default function colorPickerModule(editorModule) {
                 ref = '$refs.bg_picker';
             }
 
+            const textBtnId = `${editorModule.id}_text_picker`;
+            const bgBtnId = `${editorModule.id}_bg_picker`;
+
             let pickerPopup = document.createElement('div');
             pickerPopup.id = 'color-picker';
             pickerPopup.className = 'min-w-max p-4 bg-white rounded-md border border-gray-200/50 dark:bg-black/90 border shadow-md z-10';
-            pickerPopup.setAttribute('x-on:click.outside', "if (!$event.target.closest('button')) { $el.remove() }");
+            pickerPopup.setAttribute(
+                'x-on:click.outside',
+                `if ($event.target.id !== '${textBtnId}' && !$event.target.closest('#${textBtnId}') && $event.target.id !== '${bgBtnId}' && !$event.target.closest('#${bgBtnId}')) { color.closeColorPicker() }`
+            );
             pickerPopup.setAttribute('x-anchor', ref);
 
             pickerPopup.innerHTML = `
@@ -197,18 +208,18 @@ export default function colorPickerModule(editorModule) {
                             x-model="color.currentColor"
                             class="rounded-md w-1/2"
                         />
-                        <span class="font-medium text-gray-500 text-sm"">Pick Color</span>
+                        <span class="font-medium text-gray-500 text-sm">Pick Color</span>
                     </div>
 
                     <div class="grid grid-cols-12 gap-0.5 mt-2">
                         <template x-for="(palette, key) in color.palettes" :key="key">
                             <div class="flex flex-col space-y-0.5">
-                                <template x-for="color in palette" :key="color">
+                                <template x-for="colVal in palette" :key="colVal">
                                     <button
                                         type="button"
                                         class="h-5 w-5 border border-gray-200 rounded-sm hover:cursor-pointer"
-                                        :style="{ backgroundColor: color }"
-                                        @click="color.currentColor = color"
+                                        :style="{ backgroundColor: colVal }"
+                                        @click="color.currentColor = colVal"
                                     ></button>
                                 </template>
                             </div>
@@ -216,18 +227,15 @@ export default function colorPickerModule(editorModule) {
                     </div>
 
                     <!-- Add Button -->
-                    <button type="button" class="mt-3 px-3 py-1 rounded-sm bg-blue-500 text-xs text-white hover:cursor-pointer hover:opacity-80" @click="color.changeColor(), document.getElementById('color-picker').remove()">
+                    <button type="button" class="mt-3 px-3 py-1 rounded-sm bg-blue-500 text-xs text-white hover:cursor-pointer hover:opacity-80" @click="color.changeColor(), color.closeColorPicker()">
                         Apply Color
                     </button>
 
-                    <button type="button" class="mt-3 px-3 py-1 rounded-sm bg-gray-300 text-xs text-black hover:cursor-pointer hover:opacity-80" @click="document.getElementById('color-picker').remove()">
+                    <button type="button" class="mt-3 px-3 py-1 rounded-sm bg-gray-300 text-xs text-black hover:cursor-pointer hover:opacity-80" @click="color.closeColorPicker()">
                         Cancel
                     </button>
                 `;
             el.after(pickerPopup);
-
-            // Attach event listener AFTER inserting popup into DOM
-            // document.getElementById('insert-link-btn').addEventListener('click', this.insertOrUpdateLink.bind(this));
 
             this.open = true;
         },
@@ -237,6 +245,10 @@ export default function colorPickerModule(editorModule) {
             this.open = false;
             this.colorElement = null;
             this.colorAction = null;
+            const existing = document.getElementById('color-picker');
+            if (existing) {
+                existing.remove();
+            }
         },
 
         changeColor() {

@@ -1,9 +1,18 @@
 export default function (Alpine) {
     Alpine.directive('money', (el, { modifiers, expression }) => {
-        let [locale = 'en', currency = 'EUR', decimals] = modifiers || [];
+        let locale = 'en';
+        let currency = 'EUR';
+        let decimals = undefined;
 
-        // Normalize currency code to uppercase to fix HTML lowercasing
-        currency = currency.toUpperCase();
+        (modifiers || []).forEach(modifier => {
+            if (/^\d+$/.test(modifier)) {
+                decimals = modifier;
+            } else if (/^[a-zA-Z]{3}$/.test(modifier)) {
+                currency = modifier.toUpperCase();
+            } else {
+                locale = modifier;
+            }
+        });
 
         const currencyOverrides = {
             // Your original overrides

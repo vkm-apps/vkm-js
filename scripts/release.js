@@ -3,8 +3,17 @@ let chalk = require('chalk');
 let { execSync } = require('child_process');
 let fs = require('fs');
 let path = require('path');
+let token = process.env.GITHUB_TOKEN;
+if (!token) {
+    try {
+        token = require('./.env.json').GITHUB_TOKEN;
+    } catch (e) {
+        // Fallback if .env.json is missing or doesn't have the token
+    }
+}
+
 let axios = require('axios').create({
-    headers: { Authorization: `Bearer ${require('./.env.json').GITHUB_TOKEN}` }
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
 });
 
 let version = process.argv[2];
@@ -159,6 +168,11 @@ async function publishToNpm() {
 }
 
 async function createGitHubRelease(tag) {
+    if (!token) {
+        console.error(chalk.red('❌ GITHUB_TOKEN is missing. Cannot create GitHub release. Please set GITHUB_TOKEN env variable or configure scripts/.env.json.'));
+        return;
+    }
+
     const releaseBody = `🎉 Release v${tag}\n\n- Changes: Add meaningful changelog here if needed.`;
 
     try {
