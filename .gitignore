@@ -1,4 +1,4 @@
-scripts/.env.json
+scripts/
 # Root level node_modules (if any)
 node_modules/
 

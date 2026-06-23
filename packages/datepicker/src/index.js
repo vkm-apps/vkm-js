@@ -127,7 +127,8 @@ export default function (Alpine) {
         const isRange = modifiers.includes('range');
         const isStart = modifiers.includes('start');
         const isEnd   = modifiers.includes('end');
-        const locale  = modifiers.find(m => !['range', 'start', 'end'].includes(m)) || 'en';
+        const isLive  = modifiers.includes('live');
+        const locale  = modifiers.find(m => !['range', 'start', 'end', 'live'].includes(m)) || 'en';
         const model   = el.dataset.model || null;
         const name    = el.dataset.name  || null;
         const group   = el.dataset.rangeGroup || null;
@@ -186,9 +187,9 @@ export default function (Alpine) {
                     const partner   = getPartnerEl();
                     const partnerIso = partner ? displayToIso(partner.value) : null;
                     const arr = isStart ? [iso, partnerIso] : [partnerIso, iso];
-                    wire.set(model, arr, false);
+                    wire.set(model, arr, isLive);
                 } else {
-                    wire.set(model, iso || null, false);
+                    wire.set(model, iso || null, isLive);
                 }
             } else {
                 const hidden = getHidden();

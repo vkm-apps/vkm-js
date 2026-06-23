@@ -62,6 +62,11 @@ export default function (Alpine) {
 
     // Popover Directive
     Alpine.directive('popover', (el, { expression, modifiers }, { cleanup }) => {
+        // Generate a unique ID if one doesn't exist on the parent element to prevent collisions
+        if (!el.id) {
+            el.id = 'popover-' + Math.random().toString(36).substring(2, 9);
+        }
+
         let { triggerEl, popoverEl, isHoverable, position, transition, colorClass } = getPopoverOptions(el, modifiers);
 
         if (expression) {
@@ -152,10 +157,12 @@ export default function (Alpine) {
             popoverEl.setAttribute('x-on:click.outside', 'hide');
         }
 
+        let cleanupAutoUpdate = null;
+
         // Ensure Popover is positioned correctly and add the arrow
         Alpine.nextTick(() => {
             document.body.appendChild(popoverEl);
-            makeArrow(triggerEl, popoverEl, el.id, position, 'body', expression, colorClass);
+            cleanupAutoUpdate = makeArrow(triggerEl, popoverEl, el.id, position, 'body', expression, colorClass, el);
         });
 
         cleanup(() => {
@@ -163,6 +170,10 @@ export default function (Alpine) {
             triggerEl.removeAttribute('x-on:mouseleave');
             triggerEl.removeAttribute('x-on:click');
             popoverEl.removeAttribute('x-on:click.outside');
+            
+            // Clean up the autoUpdate loop listeners
+            if (cleanupAutoUpdate) cleanupAutoUpdate();
+
             // Remove arrow element if exists
             const arrowEl = document.getElementById(`arrow-${el.id}`);
             if (arrowEl) arrowEl.remove();
@@ -171,7 +182,7 @@ export default function (Alpine) {
     });
 
     // Function to make and position the arrow
-    function makeArrow(triggerEl, popoverEl, id, position, overflowEl, expression, colorClass) {
+    function makeArrow(triggerEl, popoverEl, id, position, overflowEl, expression, colorClass, parentEl) {
         let arrow_id = `arrow-${id}`;
         popoverEl.insertAdjacentHTML('afterbegin', `<span id="${arrow_id}" class="popover-arrow absolute z-999 h-3 w-3 animate-fade" x-show="open"></span>`);
 
@@ -200,7 +211,16 @@ export default function (Alpine) {
             },
         };
 
-        autoUpdate(triggerEl, popoverEl, () => {
+        const cleanupAutoUpdate = autoUpdate(triggerEl, popoverEl, () => {
+            // If either the trigger element or the parent popover wrapper is no longer in the DOM,
+            // clean up the auto-updating loop and remove the orphaned popover element.
+            if (!triggerEl.isConnected || !parentEl.isConnected) {
+                if (cleanupAutoUpdate) cleanupAutoUpdate();
+                popoverEl.remove();
+                if (arrowEl) arrowEl.remove();
+                return;
+            }
+
             computePosition(triggerEl, popoverEl, {
                 placement,
                 middleware: [
@@ -246,5 +266,7 @@ export default function (Alpine) {
                 }
             });
         });
+
+        return cleanupAutoUpdate;
     }
 }
