@@ -205,6 +205,7 @@ Use `x-datepicker` on standard text inputs. It will automatically mask user typi
 #### Modifiers
 * `.range`: Declares that this datepicker is part of a range.
 * `.start` / `.end`: Specifies the role in the range setup.
+* `.live`: Triggers a live update sync with Livewire when a date is selected.
 * **Locale Modifier**: Specify any language code to localize calendar labels (e.g., `.el`, `.fr`, `.de`, `.es`). Defaults to `.en`.
 
 ---
@@ -287,8 +288,10 @@ Then, initialize your editor instance:
     <!-- Content Editable Body -->
     <div contenteditable="true" 
          x-ref="editor" 
+         @input="save()"
          @paste.prevent="handlePaste"
          class="p-4 min-h-[200px] outline-none">
+         <!-- Optional: Initial content placeholder, e.g., {!! $content !!} -->
     </div>
 </div>
 ```
@@ -341,6 +344,9 @@ Wrap your trigger and dialogue. The plugin takes care of managing the dynamic `<
 * `.overflow`: Restricts page body scrolling (`overflow: hidden`) when the modal is open.
 * `.no-close`: Disables closing the modal when clicking outside on the backdrop.
 * **Transition Expression**: Define custom transition suffixes as the directive expression (e.g., `x-modal="fade"` or `x-modal="slide"`). Will search for CSS classes: `modal-{suffix}-show` and `modal-{suffix}-hide`.
+
+#### Global / Window Events
+* **`close-modal`**: Dispatch the `close-modal` event on `window` to programmatically close the open modal (e.g., `window.dispatchEvent(new CustomEvent('close-modal'))`).
 
 ---
 
@@ -462,14 +468,14 @@ npm install @vkm-js/validation
 ```
 
 #### Usage
-Wrap your form in the `validation` component, specifying rules and error output formats.
+Wrap your form in the `validation` component, specifying rules and error output formats. Each input field must call `@input="validate"` (or `@blur="validate"`) to trigger validation checks when user interaction occurs, and its `name` or `model` attribute must match the corresponding key in the rules object.
 
 ```html
 <form x-data="validation({
     email: ['required', 'email'],
     username: ['required', 'alpha_num', 'min:3'],
     age: ['nullable', 'integer', 'between:18,99']
-}, false)" @submit.prevent="validateAllAndSubmit">
+}, false)" @submit="if (!isFormValid) $event.preventDefault()">
 
     <div class="mb-4">
         <label>Email</label>
@@ -490,8 +496,8 @@ Wrap your form in the `validation` component, specifying rules and error output 
 * `numeric`: Value must be a valid number.
 * `integer`: Value must be a whole number.
 * `email`: Value must match standard email expressions.
-* `alpha`: Letters only.
-* `alpha_dash`: Letters, numbers, hyphens, and underscores.
+* `alpha`: Letters and spaces.
+* `alpha_dash`: Letters, hyphens, and underscores (numbers are not allowed).
 * `alpha_num`: Alphanumerical input only.
 * `nullable`: Skips validation if the field is left empty or set to 0.
 * `min:val`: Minimum characters (or minimum number value if numeric rule is present).

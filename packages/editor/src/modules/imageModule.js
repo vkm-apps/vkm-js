@@ -18,6 +18,7 @@ export default function imageModule(editorModule) {
         selectedImage: null,
         constraint: true,
         range: 1,
+        heightAuto: false,
 
         setRange(x) {
             this.range = x;
@@ -43,7 +44,10 @@ export default function imageModule(editorModule) {
         storeSelection() {
             const selection = window.getSelection();
             if (selection.rangeCount > 0) {
-                this.lastSelection = selection.getRangeAt(0);
+                const range = selection.getRangeAt(0);
+                if (editorModule.editor && editorModule.editor.contains(range.commonAncestorContainer)) {
+                    this.lastSelection = range;
+                }
             }
         },
 
@@ -71,6 +75,7 @@ export default function imageModule(editorModule) {
             this.range = 1;
             this.lastSelection = null;
             this.showModal = false;
+            this.heightAuto = false;
         },
 
         calculateDimensions(img) {
@@ -110,6 +115,7 @@ export default function imageModule(editorModule) {
                 }
             } else if (type === 'h') {
                 this.height = value;
+                this.heightAuto = false;
                 if (this.constraint) {
                     this.width = Math.round(this.height * this.aspectRatio);
                 }
@@ -131,7 +137,7 @@ export default function imageModule(editorModule) {
             img.src = this.src;
             img.alt = this.alt;
             img.style.width = this.width + 'px';
-            img.style.height = this.height + 'px';
+            img.style.height = this.heightAuto ? 'auto' : this.height + 'px';
             img.style.float = this.float;
 
             if (this.borderWidth) {
@@ -187,7 +193,11 @@ export default function imageModule(editorModule) {
             }
 
             if (data.height) {
-                this.height = data.height;
+                if (data.height === 'auto') {
+                    this.heightAuto = true;
+                } else {
+                    this.height = data.height;
+                }
             }
 
             this.init();
@@ -234,6 +244,8 @@ export default function imageModule(editorModule) {
 
             // Calculate height according to width & aspect ratio
             this.height = image.height || this.height || Math.round(this.width / this.aspectRatio);
+
+            this.heightAuto = image.style.height === 'auto';
 
             let currentAspectRatio = this.width / this.height;
 

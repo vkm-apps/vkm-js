@@ -65,7 +65,20 @@ export default function editorPlugin(Alpine) {
 
             // Listen for selectionchange to track active formatting state.
             // Stored ref so it can be properly removed in destroy().
-            this._selectionChangeHandler = () => this.action.updateFormattingState();
+            this._selectionChangeHandler = () => {
+                this.action.updateFormattingState();
+                
+                // Track last selection inside the editor contenteditable container
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    if (this.editor && this.editor.contains(range.commonAncestorContainer)) {
+                        if (this.image) {
+                            this.image.lastSelection = range;
+                        }
+                    }
+                }
+            };
             document.addEventListener('selectionchange', this._selectionChangeHandler);
         },
 
