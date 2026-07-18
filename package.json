@@ -1,6 +1,6 @@
 {
     "private": true,
-    "name": "xdom",
+    "name": "vkm-js",
     "version": "1.2.0",
     "license": "MIT",
     "workspaces": [
