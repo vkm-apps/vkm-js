@@ -21,6 +21,7 @@ This documentation serves as a guide for integrating `vkm-js` into your codebase
    - [8. Popover (`@vkm-js/popover`)](#8-popover-vkm-jspopover)
    - [9. Tooltip (`@vkm-js/tooltip`)](#9-tooltip-vkm-jstooltip)
    - [10. Validation (`@vkm-js/validation`)](#10-validation-vkm-jsvalidation)
+   - [11. Alert (`@vkm-js/alert`)](#11-alert-vkm-jsalert)
 3. [🛠️ Development & Building](#️-development--building)
    - [Scripts](#scripts)
    - [Adding / Customizing Packages](#adding--customizing-packages)
@@ -510,6 +511,70 @@ Wrap your form in the `validation` component, specifying rules and error output 
 `validation(rules = {}, showAsTooltip = true)`
 * `rules`: JSON string or object mapping input `name` or `model` attributes to array lists of rules.
 * `showAsTooltip`: If `true` (default), validation failures appear as red floating tooltips directly connected to inputs. If `false`, it appends `<div class="invalid-feedback">` text elements after the invalid input field.
+
+---
+
+### 11. Alert (`@vkm-js/alert`)
+
+A modern, highly customizable notification (toast) and dialog (confirm/alert) management plugin built using Alpine.js and styled with Tailwind CSS 4. It acts as a lightweight replacement for SweetAlert2.
+
+#### Installation
+```bash
+npm install @vkm-js/alert
+```
+
+#### Usage
+
+##### 1. Registration
+Register the plugin with Alpine:
+```javascript
+import Alpine from 'alpinejs';
+import alert from '@vkm-js/alert';
+
+Alpine.plugin(alert);
+Alpine.start();
+```
+
+##### 2. Configurations & Translations
+Configure global options dynamically (e.g., using Blade translations):
+```javascript
+$toast.settings({
+    confirm: {
+        title: 'Confirm Action',
+        confirmButtonText: 'Yes, Proceed',
+        cancelButtonText: 'Cancel'
+    }
+});
+```
+
+##### 3. Displaying Toasts
+```html
+<!-- Trigger default alerts -->
+<button @click="$toast.success('Settings updated successfully!')">Save</button>
+<button @click="$toast.danger('Transaction failed.', { position: 'top-left', timer: 5000 })">Error</button>
+```
+
+##### 4. Triggering Confirm Dialogs
+Pass a callback to execute on confirmation:
+```html
+<button @click="$toast.confirm(() => $wire.deleteItem(), 'Are you sure you want to delete this?')">
+    Delete Item
+</button>
+```
+Or use the Promise-based API:
+```javascript
+const confirmed = await $toast.confirm('Are you sure you want to proceed?');
+if (confirmed) {
+    // Action confirmed
+}
+```
+
+##### 5. SweetAlert2 Backwards Compatibility
+Exposes the same global window methods so legacy code works unmodified:
+```javascript
+window.success('Success message');
+window.confirm(() => doSomething(), 'Are you sure?');
+```
 
 ---
 

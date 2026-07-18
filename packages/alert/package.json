@@ -1,0 +1,29 @@
+{
+  "name": "@vkm-js/alert",
+  "version": "1.1.9",
+  "description": "An Alpinejs plugin that adds beautiful, customizable, dynamic alerts, toasts, and confirm dialogs.",
+  "homepage": "https://github.com/vkm-apps",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vkm-apps/vkm-js.git"
+  },
+  "author": "Vasilis Milopoulos",
+  "license": "MIT",
+  "main": "dist/module.cjs.js",
+  "module": "dist/module.esm.js",
+  "unpkg": "dist/cdn.min.js",
+  "dependencies": {},
+  "peerDependencies": {
+    "alpinejs": "^3.0.0"
+  },
+  "keywords": [
+    "vkm-js",
+    "Alpine",
+    "Alpine JS",
+    "Plugin",
+    "Alert",
+    "Toast",
+    "Confirm",
+    "Javascript"
+  ]
+}
