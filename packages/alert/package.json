@@ -1,6 +1,6 @@
 {
   "name": "@vkm-js/alert",
-  "version": "1.1.9",
+  "version": "1.2.0",
   "description": "An Alpinejs plugin that adds beautiful, customizable, dynamic alerts, toasts, and confirm dialogs.",
   "homepage": "https://github.com/vkm-apps",
   "repository": {
