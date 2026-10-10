@@ -1,57 +1,49 @@
 # vkm-js | Alpine.js Plugins Monorepo
 
-Welcome to **vkm-js**, a high-performance monorepo featuring lightweight, robust, and accessible UI plugins. Built specifically to work with **Alpine.js** and styled gracefully using **Tailwind CSS** or custom CSS, these plugins provide immediate interactive functionality to your applications.
-
-This documentation serves as a guide for integrating `vkm-js` into your codebase, using its core plugins, understanding available directives/modifiers, and managing the development workflow.
+A lightweight, robust, and accessible collection of UI plugins for **Alpine.js**, styled gracefully with **Tailwind CSS**. Built for instant developer productivity, seamless Livewire integration, and clean declarative syntax.
 
 ---
 
-## 📋 Table of Contents
-1. [General Setup](#-general-setup)
-   - [Integration via NPM (ES Modules)](#integration-via-npm-es-modules)
-   - [Integration via CDN](#integration-via-cdn)
-2. [Core Plugins Documentation](#-core-plugins-documentation)
-   - [1. Animate (`@vkm-js/animate`)](#1-animate-vkm-jsanimate)
-   - [2. Closeable (`@vkm-js/closeable`)](#2-closeable-vkm-jscloseable)
-   - [3. DatePicker (`@vkm-js/datepicker`)](#3-datepicker-vkm-jsdatepicker)
-   - [4. Dropdown (`@vkm-js/dropdown`)](#4-dropdown-vkm-jsdropdown)
-   - [5. Editor (`@vkm-js/editor`)](#5-editor-vkm-jseditor)
-   - [6. Modal (`@vkm-js/modal`)](#6-modal-vkm-jsmodal)
-   - [7. Money (`@vkm-js/money`)](#7-money-vkm-jsmoney)
-   - [8. Popover (`@vkm-js/popover`)](#8-popover-vkm-jspopover)
-   - [9. Tooltip (`@vkm-js/tooltip`)](#9-tooltip-vkm-jstooltip)
-   - [10. Validation (`@vkm-js/validation`)](#10-validation-vkm-jsvalidation)
-   - [11. Alert (`@vkm-js/alert`)](#11-alert-vkm-jsalert)
-3. [🛠️ Development & Building](#️-development--building)
-   - [Scripts](#scripts)
-   - [Adding / Customizing Packages](#adding--customizing-packages)
-   - [Releasing a New Version](#releasing-a-new-version)
+## ⚡ Quick Reference
+
+| Package | Type | Directive / Helper | Description |
+| :--- | :--- | :--- | :--- |
+| [`@vkm-js/animate`](#-1-animate-vkm-jsanimate) | Directive | `x-animate` | Viewport & scroll animations (`fade`, `zoom`, `up`, `down`) |
+| [`@vkm-js/closeable`](#-2-closeable-vkm-jscloseable) | Directive | `x-closeable` | Dynamic dismiss button with DOM removal, confirm dialog, or class toggle |
+| [`@vkm-js/datepicker`](#-3-datepicker-vkm-jsdatepicker) | Directive | `x-datepicker` | Masked date & datetime picker with time selection, range locking, and Livewire sync |
+| [`@vkm-js/dropdown`](#-4-dropdown-vkm-jsdropdown) | Directive | `x-dropdown` | Accessible floating dropdown with keyboard trap, arrow navigation, and teleport |
+| [`@vkm-js/editor`](#-5-editor-vkm-jseditor) | Component | `x-data="editor(...)"` | Rich WYSIWYG editor with debounced Livewire sync & table builder modal |
+| [`@vkm-js/modal`](#-6-modal-vkm-jsmodal) | Directive | `x-modal` | Accessible modal dialog with body scroll lock & automated backdrop management |
+| [`@vkm-js/money`](#-7-money-vkm-jsmoney) | Directive | `x-money` | Formats raw numbers into localized currency representations using `Intl` |
+| [`@vkm-js/tooltip`](#-8-tooltip-vkm-jstooltip) | Directive | `x-tooltip` | Floating tooltips & popovers powered by Floating UI with rich HTML templates |
+| [`@vkm-js/validation`](#-9-validation-vkm-jsvalidation) | Component | `x-data="validation(...)"` | Laravel-style form validator with floating tooltips or inline feedback |
+| [`@vkm-js/alert`](#-10-alert-vkm-jsalert) | Magic | `$toast`, `$alert` | SweetAlert alternative for toast notifications and confirm modal dialogs |
 
 ---
 
-## 🚀 General Setup
+## 🚀 Installation & Setup
 
-Every plugin in this repository is published individually as a scoped package under the `@vkm-js/` namespace. You can choose to install only the plugins you need.
+Every plugin is published individually as a scoped package under the `@vkm-js/` namespace so you can install only what you need.
 
-### Integration via NPM (ES Modules)
+### 1. Via NPM (ES Modules)
 
-Install the desired plugin using your package manager:
+Install the desired plugin(s):
 
 ```bash
-npm install @vkm-js/animate @vkm-js/modal
+npm install @vkm-js/tooltip @vkm-js/modal
 # or
-yarn add @vkm-js/animate @vkm-js/modal
+yarn add @vkm-js/tooltip @vkm-js/modal
 ```
 
-Then, register them with your Alpine.js instance:
+Register plugins in your JavaScript entry file (e.g., `app.js`):
 
 ```javascript
 import Alpine from 'alpinejs';
-import animate from '@vkm-js/animate';
+import tooltip from '@vkm-js/tooltip';
 import modal from '@vkm-js/modal';
 
 // Register plugins
-Alpine.plugin(animate);
+Alpine.plugin(tooltip);
 Alpine.plugin(modal);
 
 // Start Alpine
@@ -59,18 +51,21 @@ window.Alpine = Alpine;
 Alpine.start();
 ```
 
-### Integration via CDN
+> 💡 **Styling Note:** Most plugins (`tooltip`, `datepicker`, `alert`, `dropdown`, `closeable`) self-inject their required CSS or use standard Tailwind classes. For `@vkm-js/modal`, you can optionally import its CSS stylesheet into your application stylesheet:
+> ```css
+> @import "@vkm-js/modal/src/modal.css";
+> ```
 
-If you prefer using scripts directly in the browser, each package builds a CDN-compatible bundle that auto-registers itself when Alpine is initialized.
+### 2. Via CDN
 
-Include the stylesheet if needed, then import the script *after* Alpine's core:
+Each package provides a CDN-ready bundle that automatically registers itself when Alpine initializes:
 
 ```html
 <!-- Alpine.js Core -->
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
 <!-- vkm-js Plugins -->
-<script defer src="https://unpkg.com/@vkm-js/animate/dist/cdn.min.js"></script>
+<script defer src="https://unpkg.com/@vkm-js/tooltip/dist/cdn.min.js"></script>
 <script defer src="https://unpkg.com/@vkm-js/modal/dist/cdn.min.js"></script>
 ```
 
@@ -82,495 +77,499 @@ Include the stylesheet if needed, then import the script *after* Alpine's core:
 
 ### 1. Animate (`@vkm-js/animate`)
 
-Animate elements seamlessly as they scroll into the viewport. This plugin leverages `IntersectionObserver` for efficient scroll-triggered transitions.
+Animate elements seamlessly as they enter the visible viewport using `IntersectionObserver`. Includes instant paint detection so elements already scrolled past on page reload appear immediately without transition lag.
 
 #### Installation
 ```bash
 npm install @vkm-js/animate
 ```
 
-#### Usage
-Add the `x-animate` directive to any element you wish to animate on scroll:
-
+#### Quick Start
 ```html
-<!-- Simple Fade Animation -->
-<div x-animate class="p-6 bg-white shadow-md">
-    I will fade in when visible!
-</div>
-
-<!-- Slide Up Animation with 800ms duration -->
-<div x-animate.up.800 class="p-6 bg-white shadow-md">
-    I will slide up and fade in!
-</div>
-
-<!-- Zoom Animation with custom duration defined by directive expression -->
-<div x-animate.zoom="1500" class="p-6 bg-white shadow-md">
-    I will zoom in slowly!
+<div x-animate class="p-6 bg-white shadow rounded">
+    Fades in smoothly when scrolled into view.
 </div>
 ```
 
-#### Modifiers & Attributes
-* **Animation Type Modifier**: Choose from `fade` (default), `zoom`, `up`, or `down`.
-* **Duration Modifier**: A numerical value representing milliseconds (e.g., `.500` or `.1000`). If omitted, it checks the directive's expression value, falling back to a default of `1000`ms.
+#### Modifiers & Syntax
+| Modifier / Option | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `.fade` | Animation | Default | Fades opacity from 0 to 1 |
+| `.up` | Animation | — | Slides up from `translateY(20px)` |
+| `.down` | Animation | — | Slides down from `translateY(-50px)` |
+| `.zoom` | Animation | — | Scales up from `scale(0.8)` |
+| `.{number}` or `="number"` | Duration | `1000` | Transition duration in milliseconds (e.g. `.800` or `="1500"`) |
+
+#### Examples
+```html
+<!-- Slide up with 800ms duration -->
+<div x-animate.up.800>Slide Up (800ms)</div>
+
+<!-- Zoom in with custom expression duration -->
+<div x-animate.zoom="1500">Zoom In (1500ms)</div>
+
+<!-- Slide down -->
+<div x-animate.down.500>Slide Down (500ms)</div>
+```
 
 ---
 
 ### 2. Closeable (`@vkm-js/closeable`)
 
-Dynamically add a close/dismiss button to warnings, alerts, notifications, or card elements.
+Dynamically appends a dismissal close button to alerts, banners, cards, or notifications. The close button is positioned at `absolute top-3 right-1.5` (ensure parent has `relative` positioning).
 
 #### Installation
 ```bash
 npm install @vkm-js/closeable
 ```
 
-#### Usage
-Attach `x-closeable` to any element. It will automatically insert a close button styled to match its parent context.
-
+#### Quick Start
 ```html
-<!-- Default behavior: Removes the alert from the DOM on click -->
-<div x-closeable class="relative p-4 text-red-700 bg-red-100 rounded-md">
-    <strong>Warning!</strong> Something went wrong.
+<div x-closeable class="relative p-4 bg-red-100 text-red-800 rounded">
+    <strong>Alert!</strong> Something went wrong.
 </div>
-
-<!-- With confirmation dialog and custom icon class -->
-<div x-closeable.confirm.icon="ti ti-trash" class="relative p-4 bg-yellow-100">
-    Confirm before closing this card.
-</div>
-
-<!-- Class removal behavior: removes '.show' class on close -->
-<div x-closeable.remove.show class="alert alert-dismissible show">
-    Removes the 'show' class instead of purging from the DOM.
-</div>
-
-<!-- Hiding behaviors -->
-<div x-closeable.none class="...">Sets display to none</div>
-<div x-closeable.hidden class="...">Sets visibility to hidden</div>
 ```
 
-#### Modifiers & Attributes
-* `.icon`: Replaces the default SVG close icon. Use the directive expression to specify icon classes (e.g., `x-closeable.icon="fa-solid fa-xmark"`).
-* `.confirm`: Shows a browser confirmation dialog (`You are about to close this window!`) before dismissing.
-* `.remove`: Removes the class specified as the next modifier (e.g., `.remove.active` removes the class `active`).
-* `.none`: Applies `style.display = 'none'` instead of destroying the element.
-* `.hidden`: Applies `style.visibility = 'hidden'` instead of destroying the element.
+#### Modifiers & Syntax
+| Modifier / Syntax | Description |
+| :--- | :--- |
+| *(None)* | **Default:** Removes the element from the DOM (`el.remove()`) |
+| `.confirm` | Prompts `window.confirm('You are about to close this window!')` before removing |
+| `.remove.{class}` | Removes the specified CSS class instead of removing the element (default: `show`) |
+| `.none` | Sets `style.display = 'none'` instead of destroying the element |
+| `.hidden` | Sets `style.visibility = 'hidden'` instead of destroying the element |
+| `.icon="class"` | Replaces the default SVG with an icon class (e.g. `x-closeable.icon="ti ti-x"`) |
+
+#### Examples
+```html
+<!-- Ask confirmation before removing -->
+<div x-closeable.confirm class="relative p-4 bg-yellow-50">
+    Confirm before closing.
+</div>
+
+<!-- Remove the 'show' class instead of destroying element -->
+<div x-closeable.remove.show class="alert show">
+    Removes class 'show'.
+</div>
+
+<!-- Custom icon with hide display -->
+<div x-closeable.none.icon="ti ti-trash" class="relative p-4 bg-blue-50">
+    Hides with display:none and uses Tabler trash icon.
+</div>
+```
 
 ---
 
 ### 3. DatePicker (`@vkm-js/datepicker`)
 
-A lightweight, powerful datepicker featuring locale configurations, custom styling injection, Livewire synchronization, and date range locking.
+A date and datetime picker featuring automated input masking (`YYYY/MM/DD` or `YYYY/MM/DD HH:mm`), month/year jumpers, date range locking, Livewire synchronization, and dark mode support. Required styles are automatically injected into `<head>` (`#vkm-dp-styles`).
 
 #### Installation
 ```bash
 npm install @vkm-js/datepicker
 ```
 
-#### Usage
-Use `x-datepicker` on standard text inputs. It will automatically mask user typing to `YYYY/MM/DD` format and show a custom dropdown calendar.
-
+#### Quick Start
 ```html
-<!-- Single Date Selection -->
-<input type="text" x-datepicker placeholder="Select a date" />
+<input type="text" x-datepicker placeholder="Select date" />
+```
 
-<!-- Synchronized with Livewire -->
-<input type="text" x-datepicker data-model="selectedDate" />
+#### Modifiers & Data Attributes
+| Modifier / Attribute | Type | Description |
+| :--- | :--- | :--- |
+| `.time` | Modifier | Enables datetime mode (`YYYY/MM/DD HH:mm`) with an interactive time footer (hour/minute steppers, wheel support, "Now", and "Done" buttons) |
+| `.range` | Modifier | Marks the picker as part of a date range |
+| `.start` / `.end` | Modifier | Defines role in a range pair. When `.end` is picked, dates prior to `.start` are disabled automatically |
+| `.live` | Modifier | Immediately triggers Livewire sync upon selection |
+| `.{locale}` | Modifier | Language code for month/weekday localization (e.g., `.el`, `.fr`, `.de`, `.es`, `.it`). Default: `.en` |
+| `data-model="property"` | Attribute | Binds to a Livewire property (in range mode, syncs as `[startDate, endDate]`) |
+| `data-name="field_name"` | Attribute | Automatically populates a hidden input `<input type="hidden" name="field_name">` |
+| `data-range-group="name"` | Attribute | Connects `.start` and `.end` datepicker inputs belonging to the same range |
 
-<!-- Connected to a hidden form input -->
-<div>
-    <input type="text" x-datepicker data-name="due_date" />
-    <!-- Automatically creates or updates: <input type="hidden" name="due_date"> -->
-</div>
+#### Examples
+```html
+<!-- Single Date with Livewire sync -->
+<input type="text" x-datepicker.live data-model="publishDate" />
 
-<!-- Date Range Setup with local language setting (Greek) -->
+<!-- Date & Time Picker (mask: YYYY/MM/DD HH:mm, ISO: YYYY-MM-DD HH:mm:00) -->
+<input type="text" x-datepicker.time.el placeholder="Select date & time" />
+
+<!-- Date Range with Greek locale -->
 <div class="flex gap-4">
     <input type="text" 
            x-datepicker.range.start.el 
-           data-range-group="trip" 
+           data-range-group="booking" 
            data-model="bookingDates" 
-           placeholder="Start Date" />
-           
+           placeholder="Check-in" />
+
     <input type="text" 
            x-datepicker.range.end.el 
-           data-range-group="trip" 
+           data-range-group="booking" 
            data-model="bookingDates" 
-           placeholder="End Date" />
+           placeholder="Check-out" />
 </div>
 ```
-
-#### Config Attributes
-* `data-model`: Binds the input value to a Livewire model property. If using `.range`, Livewire updates as an array: `[start_date, end_date]`.
-* `data-name`: Maps the input value to a hidden input field of the given name.
-* `data-range-group`: Associates two datepicker inputs together. The `.end` datepicker will disable all selection dates prior to the chosen `.start` date.
-
-#### Modifiers
-* `.range`: Declares that this datepicker is part of a range.
-* `.start` / `.end`: Specifies the role in the range setup.
-* `.live`: Triggers a live update sync with Livewire when a date is selected.
-* **Locale Modifier**: Specify any language code to localize calendar labels (e.g., `.el`, `.fr`, `.de`, `.es`). Defaults to `.en`.
 
 ---
 
 ### 4. Dropdown (`@vkm-js/dropdown`)
 
-Keyboard-accessible dropdown navigation. Automatically handles key trapping, focus wrapping, transition animations, and ARIA markup.
+Accessible floating dropdown menu. Teleports the panel to `<body>`, positions via `@alpinejs/anchor`, traps focus, enables arrow key navigation, and handles outside clicks and the `Escape` key.
+
+> ⚠️ **Peer Requirements:** Requires `@alpinejs/anchor` and `@alpinejs/focus` registered in your Alpine instance.
 
 #### Installation
 ```bash
-npm install @vkm-js/dropdown
+npm install @vkm-js/dropdown @alpinejs/anchor @alpinejs/focus
 ```
 
-#### Usage
-Add `x-dropdown` to your container, marking trigger elements with `data-trigger` and panel containers with `data-dropdown`.
-
+#### Quick Start
 ```html
-<!-- Default Click Dropdown -->
-<div x-dropdown.bottom-end>
-    <button data-trigger class="px-4 py-2 bg-blue-600 text-white rounded">
-        Options
-    </button>
+<div x-dropdown.bottom-start>
+    <button data-trigger class="px-4 py-2 bg-blue-600 text-white rounded">Options</button>
     
     <div data-dropdown>
-        <a href="#" role="menuitem" class="px-4 py-2 hover:bg-gray-100">Account Settings</a>
-        <a href="#" role="menuitem" class="px-4 py-2 hover:bg-gray-100">Support</a>
-        <hr class="my-1 border-gray-200">
-        <a href="#" role="menuitem" class="px-4 py-2 text-red-600 hover:bg-red-50">Logout</a>
-    </div>
-</div>
-
-<!-- Hover Trigger with Auto-Close on Item Click -->
-<div x-dropdown.hover.select>
-    <span data-trigger class="cursor-pointer">Hover over me</span>
-    <div data-dropdown>
-        <p class="p-3">Hovering keeps this menu open. Selecting an option closes it!</p>
+        <a href="#profile" role="menuitem" class="block px-4 py-2 hover:bg-gray-100">Profile</a>
+        <a href="#settings" role="menuitem" class="block px-4 py-2 hover:bg-gray-100">Settings</a>
     </div>
 </div>
 ```
 
+#### Structure & Data Attributes
+* `data-trigger`: The button or clickable trigger element.
+* `data-dropdown`: The panel element. Can be a `<div>` or `<template data-dropdown>` (automatically teleported to `body`).
+
 #### Modifiers
-* **Placement Modifiers**: Align your dropdown using: `top`, `top-start`, `top-end`, `right`, `right-start`, `right-end`, `bottom`, `bottom-start`, `bottom-end`, `left`, `left-start`, `left-end`. Defaults to `bottom-start`.
-* `.hover`: Opens the dropdown on hover instead of click.
-* `.select`: Closes the panel immediately when an item inside is clicked.
-* `.custom`: Bypasses the default style class injection, allowing you to style the container entirely with custom CSS.
+| Modifier | Description |
+| :--- | :--- |
+| **Placement** | `top`, `top-start`, `top-end`, `bottom`, `bottom-start` (default), `bottom-end`, `left`, `left-start`, `left-end`, `right`, `right-start`, `right-end` |
+| `.fixed` | Uses fixed anchor positioning (`x-anchor.fixed.{placement}`) for sticky headers or scrolling containers |
+| `.hover` | Opens on hover with a 150ms exit bridge buffer |
+| `.select` | Closes the panel immediately when any item inside is clicked |
+| `.custom` | Disables default styling classes (`shadow-lg`, `bg-white/70`, `min-w-72`, etc.) leaving only `absolute z-1000` |
+
+#### Examples
+```html
+<!-- Hover trigger with auto-close on item selection -->
+<div x-dropdown.bottom-end.hover.select>
+    <button data-trigger class="btn">User Menu</button>
+    <div data-dropdown>
+        <a href="/account" role="menuitem" class="px-4 py-2">Account</a>
+        <a href="/logout" role="menuitem" class="px-4 py-2 text-red-600">Logout</a>
+    </div>
+</div>
+
+<!-- Template wrapper (recommended for Livewire morph stability) -->
+<div x-dropdown.bottom-start>
+    <button data-trigger class="btn">Actions</button>
+    <template data-dropdown>
+        <div class="p-2 space-y-1">
+            <button role="menuitem" class="w-full text-left">Edit</button>
+            <button role="menuitem" class="w-full text-left text-red-500">Delete</button>
+        </div>
+    </template>
+</div>
+```
 
 ---
 
 ### 5. Editor (`@vkm-js/editor`)
 
-A custom WYSIWYG editor containing components for text alignment, format controls, links, colors, and a rich modal manager for tables.
+A rich WYSIWYG editor designed for Livewire applications. Features 500ms debounced synchronization, plain-text paste sanitation, formatting toolbars, color pickers, and a comprehensive table builder modal.
 
 #### Installation
 ```bash
 npm install @vkm-js/editor
 ```
 
-#### Usage
-First, mount the shared Table Modal component *once* in your application template layout:
-
+#### Quick Start
 ```html
-<!-- In your master layout blade/HTML file -->
+<!-- 1. Mount the Table Modal singleton once in your application layout -->
 <div x-data="editorTableModal" x-show="showModal" class="fixed inset-0 z-9999" x-cloak>
-    <!-- Modal overlay & table settings UI -->
+    <!-- Modal overlay & table controls -->
 </div>
-```
 
-Then, initialize your editor instance:
-
-```html
-<div x-data="editor('unique-editor-id', 'post.content', $wire)" class="border rounded-md">
-    <!-- Toolbar Actions -->
+<!-- 2. Editor Component Instance -->
+<div x-data="editor('blog-editor', 'post.content', $wire)" class="border rounded-md">
+    <!-- Toolbar -->
     <div class="flex gap-2 p-2 border-b bg-gray-50">
-        <button type="button" @click="action.bold()" :class="{ 'bg-gray-200': action.isBold }">B</button>
-        <button type="button" @click="action.italic()" :class="{ 'bg-gray-200': action.isItalic }">I</button>
-        <button type="button" @click="color.open()">Color</button>
-        <button type="button" @click="table.openModal()">Insert Table</button>
+        <button type="button" @click="action.bold()"><b>B</b></button>
+        <button type="button" @click="action.italic()"><i>I</i></button>
+        <button type="button" @click="table.openModal()">Table</button>
     </div>
 
-    <!-- Content Editable Body -->
+    <!-- Contenteditable Area -->
     <div contenteditable="true" 
          x-ref="editor" 
          @input="save()"
          @paste.prevent="handlePaste"
-         class="p-4 min-h-[200px] outline-none">
-         <!-- Optional: Initial content placeholder, e.g., {!! $content !!} -->
-    </div>
+         class="p-4 min-h-[200px] outline-none"></div>
 </div>
 ```
 
-#### Initialization Arguments
-`editor(id, model, $wire, watchFor = null)`
-* `id`: Unique DOM identifier.
-* `model`: The Livewire data model string to bind content (e.g., `'post.body'`).
-* `$wire`: References Livewire's Javascript controller object.
-* `watchFor`: (Optional) Reactive watcher for dynamic multi-model bindings.
+#### Arguments: `editor(id, model, $wire, watchFor = null)`
+* `id`: Unique DOM ID for this editor instance.
+* `model`: Livewire model path string (e.g., `'post.body'`).
+* `$wire`: Reference to the Livewire component JavaScript object.
+* `watchFor`: *(Optional)* Name of property to watch for dynamic model switching (e.g., `'activeTab'`).
+
+#### Available Submodules
+| Module | Primary Methods |
+| :--- | :--- |
+| `action` | `bold()`, `italic()`, `underline()`, `strikeThrough()`, `heading(level)`, `align(type)`, `list(type)`, `updateFormattingState()` |
+| `color` | `open()`, `apply(colorHex)` |
+| `table` | `openModal()` (dispatches table builder modal), context menu commands |
+| `link` | `open()`, `insert(url)` |
+| `image` | `open()`, selection memory handling |
+| `video` | Video embed insertion |
+| `cleanup` | Strips formatting and sanitizes elements |
 
 ---
 
 ### 6. Modal (`@vkm-js/modal`)
 
-A clean modal overlay manager that automatically injects background layers, manages body scroll locks, and offers micro-animations.
+Accessible modal dialog manager that auto-injects backdrop overlays, restricts background scrolling, and supports customizable transitions.
 
 #### Installation
 ```bash
 npm install @vkm-js/modal
 ```
 
-#### Usage
-Wrap your trigger and dialogue. The plugin takes care of managing the dynamic `<backdrop>` sibling element.
-
+#### Quick Start
 ```html
-<!-- Large modal with scroll prevention -->
 <div x-modal.lg.overflow>
-    <!-- Click trigger -->
-    <button data-trigger class="btn">Open Details</button>
-    
-    <!-- Modal panel -->
+    <!-- Trigger -->
+    <button data-trigger class="btn btn-primary">Open Modal</button>
+
+    <!-- Dialog -->
     <div data-modal>
         <div class="modal-header">
-            <h2>Detailed View</h2>
+            <h3>Modal Title</h3>
         </div>
         <div class="modal-body">
-            This modal locks the background scrolling.
+            Modal body content.
         </div>
-        <!-- Close trigger (if omitted, a default top-right close button is injected) -->
-        <button data-close class="btn-close">Close Modal</button>
+        <!-- Close button (auto-injected if omitted) -->
+        <button data-close class="btn">Close</button>
     </div>
 </div>
 ```
 
-#### Modifiers
-* **Size Modifiers**: `sm`, `md`, `lg`, `xl`, `xxl`, `fullscreen`.
-* **Position Modifiers**: `top` (aligns modal to top of viewport) or `bottom`.
-* `.show`: Keeps the modal open by default on page load.
-* `.overflow`: Restricts page body scrolling (`overflow: hidden`) when the modal is open.
-* `.no-close`: Disables closing the modal when clicking outside on the backdrop.
-* **Transition Expression**: Define custom transition suffixes as the directive expression (e.g., `x-modal="fade"` or `x-modal="slide"`). Will search for CSS classes: `modal-{suffix}-show` and `modal-{suffix}-hide`.
+#### Modifiers & Expression
+| Modifier / Expression | Description |
+| :--- | :--- |
+| **Sizes** | `.sm`, `.md`, `.lg`, `.xl`, `.xxl`, `.fullscreen` |
+| **Position** | `.top` (aligns to viewport top), `.bottom` (aligns to viewport bottom) |
+| `.overflow` | Locks body scrolling (`overflow: hidden`) when modal is open |
+| `.show` | Opens the modal by default on initial page load |
+| `.no-close` | Disables closing when clicking on the outside backdrop |
+| `x-modal="transition"` | Transition animation suffix (`fade` [default], `scale`, `slide-in`, `slide-bottom`, `fall`, `360`) |
 
-#### Global / Window Events
-* **`close-modal`**: Dispatch the `close-modal` event on `window` to programmatically close the open modal (e.g., `window.dispatchEvent(new CustomEvent('close-modal'))`).
+#### Programmatic Control
+Close any currently open modal from anywhere via JavaScript:
+```javascript
+window.dispatchEvent(new CustomEvent('close-modal'));
+```
 
 ---
 
 ### 7. Money (`@vkm-js/money`)
 
-A simple utility to format static raw numbers into local currency representations using the browser's native `Intl.NumberFormat`.
+Formats raw numbers into localized currency representations using browser-native `Intl.NumberFormat`, with built-in currency symbol fallback overrides (JPY, AUD, CNY, INR, RUB, ZAR, etc.).
 
 #### Installation
 ```bash
 npm install @vkm-js/money
 ```
 
-#### Usage
-Apply `x-money` to any text element holding a raw number.
-
+#### Quick Start
 ```html
-<!-- Output format: $12,345.68 (US English Locale, USD, 2 decimals) -->
+<!-- Outputs: $12,345.68 (US Dollar, English locale, 2 decimals) -->
 <span x-money.USD.en.2>12345.678</span>
-
-<!-- Output format: 12.345,68 € (German Locale, EUR, 2 decimals) -->
-<span x-money.EUR.de.2>12345.678</span>
-
-<!-- Output format: ¥12,346 (Japanese Yen, no decimals) -->
-<span x-money.JPY.ja.0>12345.678</span>
-
-<!-- Output format: USD 100.00 (Using 'code' as the display option) -->
-<span x-money.USD.en.2="code">100</span>
 ```
 
 #### Modifiers & Expression
-* **Currency Modifier (3 Letters)**: Identifies the currency standard (e.g., `.USD`, `.EUR`, `.JPY`, `.GBP`, `.ZAR`). Defaults to `EUR`.
-* **Locale Modifier**: Declares localized formatting standard (e.g., `.en`, `.de`, `.fr`, `.ja`). Defaults to `en`.
-* **Decimal Modifier (Number)**: Limits the fractional digits shown.
-* **Directive Expression**: Configures `currencyDisplay`. Accepts `'symbol'` (default), `'narrowSymbol'`, `'code'`, or `'name'`.
+Modifiers are order-independent:
+* **Currency (3 Letters):** ISO currency code (e.g. `.EUR` [default], `.USD`, `.GBP`, `.JPY`, `.AUD`, `.CAD`, `.CHF`).
+* **Locale:** Language/country code (e.g. `.en` [default], `.de`, `.fr`, `.ja`, `.el`).
+* **Decimals (Number):** Fraction digits (e.g. `.0`, `.2`, `.4`).
+* **Directive Expression (`currencyDisplay`):** Configures display format. Options: `'symbol'` (default), `'narrowSymbol'`, `'code'`, `'name'`.
 
----
-
-### 8. Popover (`@vkm-js/popover`)
-
-Rich contextual tooltips and popovers featuring customizable directions, themes, and automated safety sanitization for html imports.
-
-#### Installation
-```bash
-npm install @vkm-js/popover
-```
-
-#### Usage
-Prepare popover triggers and contents. The library positions elements and automatically draws connection arrows aligned with your selected orientation.
-
+#### Examples
 ```html
-<!-- Popover triggered on Click with auto-generated arrow -->
-<div x-popover.top.info>
-    <button data-trigger class="btn">Info Popover</button>
-    <div data-popover class="p-3">
-        <h4 class="font-bold">Did you know?</h4>
-        <p>This popover is styled with theme colors and positioned above the trigger.</p>
-    </div>
-</div>
+<!-- German Euro: 12.345,68 € -->
+<span x-money.EUR.de.2>12345.678</span>
 
-<!-- Hover-triggered Danger warning popover -->
-<div x-popover.right.hover.danger>
-    <span data-trigger class="text-red-600">Hover for Warning</span>
-    <div data-popover class="p-2">
-        Critical data warning!
-    </div>
-</div>
+<!-- Japanese Yen (no decimals): ¥12,346 -->
+<span x-money.JPY.ja.0>12345.678</span>
 
-<!-- Inline HTML Popover with built-in XSS Sanitization -->
-<div x-popover.bottom="<p>Click <a href='javascript:alert(1)'>here</a> (Dangerous elements like scripts or JS-URLs are automatically sanitized)</p>">
-    <button data-trigger class="btn">Sanitized Popover</button>
-    <div data-popover class="p-2"></div>
-</div>
+<!-- Currency code display: USD 100.00 -->
+<span x-money.USD.en.2="code">100</span>
 ```
-
-#### Modifiers
-* **Placements**: `top`, `top-start`, `top-end`, `right`, `right-start`, `right-end`, `bottom`, `bottom-start`, `bottom-end`, `left`, `left-start`, `left-end`. Defaults to `bottom`.
-* `.hover`: Activates popup on mouseenter and dismisses it on mouseleave (rather than click).
-* **Animations**: `animate-fade` (default), `animate-drop`, or `animate-none`.
-* **Themes**: Add custom coloring modifier matching your alert guidelines: `.primary`, `.secondary`, `.success`, `.danger`, `.warning`, `.info`, `.light`, `.dark`.
 
 ---
 
-### 9. Tooltip (`@vkm-js/tooltip`)
+### 8. Tooltip & Popover (`@vkm-js/tooltip`)
 
-A featherweight hover tooltip generator that constructs and positions small text labels dynamically at the document body root.
+Unified tooltip and popover engine built on `@floating-ui/dom` and styled for Tailwind CSS. Supports unquoted text, reactive Alpine bindings, rotating diamond arrows, interactive hover bridges (150ms buffer), and rich HTML templates.
 
 #### Installation
 ```bash
 npm install @vkm-js/tooltip
 ```
 
-#### Usage
-Attach `x-tooltip` to any element. The tooltip content can be specified in the attribute value or expression.
-
+#### Quick Start
 ```html
-<!-- Simple Top Tooltip -->
+<!-- Simple text (no quotes needed) -->
 <button x-tooltip="Add to cart">Add</button>
 
-<!-- Placed on the bottom with Success green styling -->
-<button x-tooltip.bottom.success="Item saved!">Save</button>
-
-<!-- Left placement with danger styling -->
-<button x-tooltip.left.danger="Delete permanently">Delete</button>
+<!-- Reactive property -->
+<button x-tooltip="statusText">Profile</button>
 ```
 
 #### Modifiers
-* **Placement**: `.top` (default), `.bottom`, `.left`, `.right`.
-* **Themes**: `.dark` (default), `.light`, `.info`, `.success`, `.danger`, `.warning`.
+| Category | Modifiers |
+| :--- | :--- |
+| **Placements** | `.top` (default), `.top-start`, `.top-end`, `.bottom`, `.bottom-start`, `.bottom-end`, `.left`, `.left-start`, `.left-end`, `.right`, `.right-start`, `.right-end` |
+| **Triggers** | `.click` or `.popover` (toggles on click; dismisses on outside click or `Escape`). Default is `hover` + `focus` |
+| **Themes** | `.dark` (default), `.light`, `.danger` (`.red`), `.success` (`.green`, `.emerald`), `.warning` (`.yellow`, `.amber`), `.info` (`.blue`, `.sky`) |
+| **Options** | `.interactive` (enables hover gap bridge), `.no-arrow` (hides arrow), `.html` / `.raw` (sanitizes & renders HTML string) |
+
+#### Examples
+
+##### 1. Click Popover with Theme
+```html
+<button x-tooltip.click.bottom.danger="Are you sure? This cannot be undone.">
+    Delete Account
+</button>
+```
+
+##### 2. Rich HTML Popover (`<template data-html>`)
+The interactive hover bridge automatically allows moving the cursor inside the popup without closing it:
+```html
+<div x-tooltip.click.bottom-start>
+    <button data-trigger class="px-3 py-1.5 bg-zinc-800 text-white rounded">
+        Account Actions
+    </button>
+    <template data-html>
+        <div class="w-64 p-2 space-y-2">
+            <h4 class="font-semibold text-sm">Quick Settings</h4>
+            <p class="text-xs text-zinc-500">Manage billing and subscription.</p>
+            <button class="w-full text-xs bg-indigo-600 text-white py-1 rounded">Upgrade</button>
+        </div>
+    </template>
+</div>
+```
 
 ---
 
-### 10. Validation (`@vkm-js/validation`)
+### 9. Validation (`@vkm-js/validation`)
 
-A flexible form validator supporting Laravel-like rule declarations. Blocks submit buttons during check routines and highlights invalid fields.
+Form validation component providing Laravel-inspired rule declarations, array wildcard field matching (`items.*.name`), live error tooltips or inline feedback, and automated submit button locking during validation checks.
 
 #### Installation
 ```bash
 npm install @vkm-js/validation
 ```
 
-#### Usage
-Wrap your form in the `validation` component, specifying rules and error output formats. Each input field must call `@input="validate"` (or `@blur="validate"`) to trigger validation checks when user interaction occurs, and its `name` or `model` attribute must match the corresponding key in the rules object.
-
+#### Quick Start
 ```html
 <form x-data="validation({
-    email: ['required', 'email'],
-    username: ['required', 'alpha_num', 'min:3'],
-    age: ['nullable', 'integer', 'between:18,99']
-}, false)" @submit="if (!isFormValid) $event.preventDefault()">
+    name: ['required', 'min:3'],
+    email: ['required', 'email']
+})" @submit="if (!isFormValid) $event.preventDefault()">
 
-    <div class="mb-4">
-        <label>Email</label>
-        <input type="email" name="email" id="user_email" @input="validate" class="border p-2">
-    </div>
+    <input type="text" name="name" @input="validate" class="border p-2" />
+    <input type="email" name="email" @input="validate" class="border p-2" />
 
-    <div class="mb-4">
-        <label>Username</label>
-        <input type="text" name="username" id="user_username" @input="validate" class="border p-2">
-    </div>
-
-    <button type="submit" class="btn">Submit Form</button>
+    <button type="submit" class="btn">Save</button>
 </form>
 ```
 
-#### Validation Rules Available
-* `required`: Field must not be empty.
-* `numeric`: Value must be a valid number.
-* `integer`: Value must be a whole number.
-* `email`: Value must match standard email expressions.
-* `alpha`: Letters and spaces.
-* `alpha_dash`: Letters, hyphens, and underscores (numbers are not allowed).
-* `alpha_num`: Alphanumerical input only.
-* `nullable`: Skips validation if the field is left empty or set to 0.
-* `min:val`: Minimum characters (or minimum number value if numeric rule is present).
-* `max:val`: Maximum characters (or maximum number value if numeric rule is present).
-* `between:min,max`: Limits values/characters between ranges.
-* `gt:val` / `gte:val`: Greater than (or equal).
-* `lt:val` / `lte:val`: Less than (or equal).
+#### Arguments: `validation(rules = {}, showAsTooltip = true)`
+* `rules`: Object or JSON string mapping input `name` or `model` attributes to array lists of rules. Supports wildcard asterisks (e.g., `'items.*.qty': ['required', 'integer']`).
+* `showAsTooltip`: If `true` (default), errors display as red floating tooltips. If `false`, appends `<div id="error-{id}" class="invalid-feedback">` below the invalid input (requires an `id` on the input).
 
-#### Component Arguments
-`validation(rules = {}, showAsTooltip = true)`
-* `rules`: JSON string or object mapping input `name` or `model` attributes to array lists of rules.
-* `showAsTooltip`: If `true` (default), validation failures appear as red floating tooltips directly connected to inputs. If `false`, it appends `<div class="invalid-feedback">` text elements after the invalid input field.
+#### Available Rules
+| Rule | Description |
+| :--- | :--- |
+| `required` | Value must not be empty |
+| `numeric` | Value must be a valid number |
+| `integer` | Value must be a whole integer |
+| `email` | Must match standard email pattern |
+| `alpha` | Letters and spaces only |
+| `alpha_dash` | Letters, hyphens, and underscores |
+| `alpha_num` | Alphanumeric characters only |
+| `nullable` | Skips validation if empty or 0 |
+| `min:val` / `max:val` | Minimum / maximum characters (or value if numeric/integer) |
+| `between:min,max` | Within character length or numeric value range |
+| `gt:val` / `gte:val` | Greater than / greater than or equal to |
+| `lt:val` / `lte:val` | Less than / less than or equal to |
+
+#### Methods & State
+* `validate()`: Triggers validation on `@input="validate"` or `@blur="validate"`.
+* `validateDropdown(name, value, id)`: Programmatically validates a custom dropdown.
+* `isFormValid`: Boolean property indicating overall form validity.
 
 ---
 
-### 11. Alert (`@vkm-js/alert`)
+### 10. Alert (`@vkm-js/alert`)
 
-A modern, highly customizable notification (toast) and dialog (confirm/alert) management plugin built using Alpine.js and styled with Tailwind CSS 4. It acts as a lightweight replacement for SweetAlert2.
+A lightweight toast notification and dialog management plugin styled with Tailwind CSS. Acts as a modern replacement for SweetAlert2, automatically injecting its own containers and backdrop overlays into the DOM.
 
 #### Installation
 ```bash
 npm install @vkm-js/alert
 ```
 
-#### Usage
-
-##### 1. Registration
-Register the plugin with Alpine:
-```javascript
-import Alpine from 'alpinejs';
-import alert from '@vkm-js/alert';
-
-Alpine.plugin(alert);
-Alpine.start();
-```
-
-##### 2. Configurations & Translations
-Configure global options dynamically (e.g., using Blade translations):
-```javascript
-$toast.settings({
-    confirm: {
-        title: 'Confirm Action',
-        confirmButtonText: 'Yes, Proceed',
-        cancelButtonText: 'Cancel'
-    }
-});
-```
-
-##### 3. Displaying Toasts
+#### Quick Start
 ```html
-<!-- Trigger default alerts -->
-<button @click="$toast.success('Settings updated successfully!')">Save</button>
-<button @click="$toast.danger('Transaction failed.', { position: 'top-left', timer: 5000 })">Error</button>
+<!-- Trigger toast notifications -->
+<button @click="$toast.success('Settings saved!')">Save</button>
+<button @click="$toast.danger('Transaction failed.', { position: 'top-left' })">Error</button>
 ```
 
-##### 4. Triggering Confirm Dialogs
-Pass a callback to execute on confirmation:
+#### API Methods (`$toast` and `$alert`)
+| Method | Description |
+| :--- | :--- |
+| `$toast.success(message, options?)` | Green success toast |
+| `$toast.error(message, options?)` | Red error toast |
+| `$toast.danger(message, options?)` | Alias for `$toast.error` |
+| `$toast.warning(message, options?)` | Amber warning toast |
+| `$toast.info(message, options?)` | Sky blue informational toast |
+| `$toast.show(message, options?)` | Neutral / base toast |
+| `$toast.confirm(callbackOrText, ...)` | Triggers modal confirmation dialog |
+| `$toast.settings(config)` | Globally customize buttons, titles, and defaults |
+
+#### Confirm Dialog Examples
+
+##### 1. Callback Style
 ```html
-<button @click="$toast.confirm(() => $wire.deleteItem(), 'Are you sure you want to delete this?')">
-    Delete Item
+<button @click="$toast.confirm(() => $wire.deleteItem(), 'Delete this record?')">
+    Delete Record
 </button>
 ```
-Or use the Promise-based API:
+
+##### 2. Promise Style
 ```javascript
 const confirmed = await $toast.confirm('Are you sure you want to proceed?');
 if (confirmed) {
-    // Action confirmed
+    // Proceed with action
 }
 ```
 
-##### 5. SweetAlert2 Backwards Compatibility
-Exposes the same global window methods so legacy code works unmodified:
+#### Toast Options
+```javascript
+$toast.success('Item added!', {
+    position: 'top-right', // 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right'
+    timer: 4000,           // Duration in ms (0 for persistent)
+    title: 'Success',      // Optional title header
+    customClasses: ''      // Additional Tailwind CSS classes
+});
+```
+
+#### Global Backwards Compatibility
+Exposes global window helpers for compatibility with SweetAlert2-style calls:
 ```javascript
 window.success('Success message');
 window.confirm(() => doSomething(), 'Are you sure?');
@@ -580,33 +579,29 @@ window.confirm(() => doSomething(), 'Are you sure?');
 
 ## 🛠️ Development & Building
 
-This repository uses **npm workspaces** to manage packages under a single private root structure.
+This repository uses **npm workspaces** to manage packages in a monorepo structure.
 
 ### Scripts
-In the root directory of the `vkm-js` project, run:
+Run from the root directory:
 
-* **Build all packages**:
+* **Build all packages:**
   ```bash
   npm run build
   ```
-  Runs the esbuild configuration defined in `scripts/build.js`, publishing ESM, CommonJS, and CDN production bundles inside each package's `./dist` folder.
+  Compiles ESM, CommonJS, and CDN bundles into each package's `./dist` directory using esbuild.
 
-* **Development mode (File Watcher)**:
+* **Development mode (File Watcher):**
   ```bash
   npm run watch
   ```
-  Starts esbuild in watch mode. Any edits to source code files under `packages/*/src` will trigger automated incremental compilations.
+  Rebuilds bundles automatically whenever source files in `packages/*/src` change.
 
-### Adding / Customizing Packages
-To add a new AlpineJS plugin:
-1. Create a subfolder inside `packages/` (e.g. `packages/newplugin`).
-2. Add a `package.json` with a name prefix like `@vkm-js/newplugin`.
-3. Create entry point files:
-   - `builds/cdn.js`: Configured to auto-register plugin inside browser `'alpine:init'` event.
-   - `builds/module.js`: Entry point exports default function.
-4. Run `npm run build` to verify bundles are compiled in `dist/`.
+* **Release version:**
+  ```bash
+  npm run release
+  ```
 
 ---
 
 ## 📄 License
-This repository is open-sourced software licensed under the [MIT License](file:///c:/laragon/www/vmphobos/packages/vkm-js/LICENSE.md).
+This repository is open-sourced software licensed under the [MIT License](./LICENSE.md).

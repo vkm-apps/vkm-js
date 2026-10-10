@@ -115,6 +115,87 @@ export default function (Alpine) {
             .vkm-dp-day:disabled {
                 opacity: .25; cursor: default;
             }
+
+            /* Time selection */
+            .vkm-dp-time {
+                display: flex; align-items: center; justify-content: space-between;
+                padding: 8px 12px;
+                border-top: 1px solid rgba(0,0,0,.08);
+                background: #f8fafc;
+            }
+            .dark .vkm-dp-time {
+                border-top-color: rgba(255,255,255,.08);
+                background: #0f172a;
+            }
+            .vkm-dp-time-left {
+                display: flex; align-items: center; gap: 8px;
+            }
+            .vkm-dp-time-icon {
+                color: #94a3b8; display: flex; align-items: center;
+            }
+            .dark .vkm-dp-time-icon { color: #64748b; }
+            .vkm-dp-time-inputs {
+                display: flex; align-items: center; gap: 2px;
+            }
+            .vkm-dp-time-unit {
+                display: flex; flex-direction: column; align-items: center;
+            }
+            .vkm-dp-time-step {
+                background: none; border: none; cursor: pointer;
+                font-size: 7px; line-height: 1; padding: 2px 4px;
+                color: #64748b; opacity: .7; transition: opacity .12s, color .12s;
+                user-select: none;
+            }
+            .vkm-dp-time-step:hover {
+                opacity: 1; color: #3b82f6;
+            }
+            .dark .vkm-dp-time-step:hover {
+                opacity: 1; color: #60a5fa;
+            }
+            .vkm-dp-time-val {
+                width: 32px; height: 26px; border: 1px solid #cbd5e1;
+                border-radius: 5px; text-align: center;
+                font-size: 13px; font-weight: 700; background: #fff;
+                color: inherit; outline: none; padding: 0;
+                transition: border-color .15s, box-shadow .15s;
+            }
+            .vkm-dp-time-val:focus {
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 2px rgba(59,130,246,.2);
+            }
+            .dark .vkm-dp-time-val {
+                background: #1e293b; border-color: #475569; color: #f1f5f9;
+            }
+            .dark .vkm-dp-time-val:focus {
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 2px rgba(59,130,246,.3);
+            }
+            .vkm-dp-time-sep {
+                font-weight: 700; font-size: 13px; color: #94a3b8;
+                user-select: none; margin: 0 1px;
+            }
+            .vkm-dp-time-actions {
+                display: flex; align-items: center; gap: 6px;
+            }
+            .vkm-dp-btn-now, .vkm-dp-btn-done {
+                border: none; cursor: pointer; font-size: 12px; font-weight: 600;
+                border-radius: 6px; padding: 5px 10px;
+                transition: background .15s, color .15s;
+            }
+            .vkm-dp-btn-now {
+                background: transparent; color: #64748b;
+            }
+            .vkm-dp-btn-now:hover {
+                background: rgba(0,0,0,.06); color: #0f172a;
+            }
+            .dark .vkm-dp-btn-now { color: #94a3b8; }
+            .dark .vkm-dp-btn-now:hover {
+                background: rgba(255,255,255,.08); color: #f8fafc;
+            }
+            .vkm-dp-btn-done {
+                background: #3b82f6; color: #fff;
+            }
+            .vkm-dp-btn-done:hover { background: #2563eb; }
         `;
         document.head.appendChild(s);
     }
@@ -128,7 +209,8 @@ export default function (Alpine) {
         const isStart = modifiers.includes('start');
         const isEnd   = modifiers.includes('end');
         const isLive  = modifiers.includes('live');
-        const locale  = modifiers.find(m => !['range', 'start', 'end', 'live'].includes(m)) || 'en';
+        const hasTime = modifiers.includes('time');
+        const locale  = modifiers.find(m => !['range', 'start', 'end', 'live', 'time'].includes(m)) || 'en';
         const model   = el.dataset.model || null;
         const name    = el.dataset.name  || null;
         const group   = el.dataset.rangeGroup || null;
@@ -143,6 +225,8 @@ export default function (Alpine) {
         let selYear    = null;
         let selMonth   = null;
         let selDay     = null;
+        let selHour    = today.getHours();
+        let selMinute  = today.getMinutes();
         let popup      = null;
         let isOpen     = false;
         let showMonths = false;
@@ -166,17 +250,65 @@ export default function (Alpine) {
             return document.querySelector(`[data-range-group="${group}"][data-range-role="${role}"]`);
         }
 
+        function currentIso() {
+            if (!selYear || !selMonth || !selDay) return null;
+            const y = String(selYear);
+            const m = String(selMonth).padStart(2, '0');
+            const d = String(selDay).padStart(2, '0');
+            if (!hasTime) {
+                return `${y}-${m}-${d}`;
+            }
+            const h = String(selHour).padStart(2, '0');
+            const min = String(selMinute).padStart(2, '0');
+            return `${y}-${m}-${d} ${h}:${min}:00`;
+        }
+
         function displayToIso(display) {
             if (!display || display.length < 10) return null;
-            const [y, m, d] = display.split('/');
-            if (!y || !m || !d) return null;
-            return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+            const parts = display.trim().split(' ');
+            const dateStr = parts[0];
+            const timeStr = parts[1] || '';
+
+            const [y, m, d] = dateStr.split('/').map(Number);
+            if (!y || !m || !d || m < 1 || m > 12 || d < 1 || d > 31) return null;
+
+            const isoDate = `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            if (!hasTime) return isoDate;
+
+            let h = selHour;
+            let min = selMinute;
+            if (timeStr) {
+                const tParts = timeStr.split(':');
+                if (tParts.length >= 2) {
+                    const parsedH = parseInt(tParts[0]);
+                    const parsedMin = parseInt(tParts[1]);
+                    if (!isNaN(parsedH) && parsedH >= 0 && parsedH <= 23) h = parsedH;
+                    if (!isNaN(parsedMin) && parsedMin >= 0 && parsedMin <= 59) min = parsedMin;
+                }
+            }
+            return `${isoDate} ${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`;
         }
 
         function isoToDisplay(iso) {
             if (!iso) return '';
-            const [y, m, d] = iso.split('-');
-            return `${y}/${m}/${d}`;
+            const [datePart, timePart] = iso.includes('T') ? iso.split('T') : iso.split(' ');
+            const parts = (datePart || '').split('-');
+            if (parts.length !== 3) return '';
+            const [y, m, d] = parts;
+            let res = `${y}/${m.padStart(2, '0')}/${d.padStart(2, '0')}`;
+            if (hasTime) {
+                let h = String(selHour).padStart(2, '0');
+                let min = String(selMinute).padStart(2, '0');
+                if (timePart) {
+                    const tParts = timePart.split(':');
+                    if (tParts.length >= 2) {
+                        h = tParts[0].padStart(2, '0');
+                        min = tParts[1].padStart(2, '0');
+                    }
+                }
+                res += ` ${h}:${min}`;
+            }
+            return res;
         }
 
         function saveValue(iso) {
@@ -219,15 +351,28 @@ export default function (Alpine) {
             if (iso) setFromIso(iso);
         }
 
-        function setFromIso(iso) {
-            const parts = iso.split('-');
+        function setFromIso(iso, updateInput = true) {
+            if (!iso) return;
+            const [datePart, timePart] = iso.includes('T') ? iso.split('T') : iso.split(' ');
+            const parts = (datePart || '').split('-');
             if (parts.length !== 3) return;
             selYear  = parseInt(parts[0]);
             selMonth = parseInt(parts[1]);
             selDay   = parseInt(parts[2]);
             viewYear  = selYear;
             viewMonth = selMonth;
-            el.value  = isoToDisplay(iso);
+
+            if (hasTime && timePart) {
+                const tParts = timePart.split(':');
+                if (tParts.length >= 2) {
+                    selHour   = parseInt(tParts[0]) || 0;
+                    selMinute = parseInt(tParts[1]) || 0;
+                }
+            }
+
+            if (updateInput) {
+                el.value = isoToDisplay(iso);
+            }
         }
 
         // ── Locale helpers ───────────────────────────────────────────────────
@@ -267,7 +412,8 @@ export default function (Alpine) {
             if (!partner?.value) return false;
             const startIso = displayToIso(partner.value);
             if (!startIso) return false;
-            const [sy, sm, sd] = startIso.split('-').map(Number);
+            const [datePart] = startIso.split(' ');
+            const [sy, sm, sd] = datePart.split('-').map(Number);
             return new Date(viewYear, viewMonth - 1, day) < new Date(sy, sm - 1, sd);
         }
 
@@ -275,7 +421,7 @@ export default function (Alpine) {
         function positionPopup() {
             if (!popup) return;
             const rect        = el.getBoundingClientRect();
-            const popH        = popup.offsetHeight || 320;
+            const popH        = popup.offsetHeight || (hasTime ? 370 : 320);
             const popW        = popup.offsetWidth || 288;
             const spaceBelow  = window.innerHeight - rect.bottom;
 
@@ -445,6 +591,193 @@ export default function (Alpine) {
             }
 
             popup.appendChild(grid);
+
+            // ── Time selection ───────────────────────────────────────────────
+            if (hasTime) {
+                const timeFooter = mk('div', 'vkm-dp-time');
+
+                const timeRow = mk('div', 'vkm-dp-time-left');
+                const clockIcon = mk('span', 'vkm-dp-time-icon');
+                clockIcon.innerHTML = mkSvg('<circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>');
+                timeRow.appendChild(clockIcon);
+
+                const inputsWrap = mk('div', 'vkm-dp-time-inputs');
+
+                // Hour
+                const hUnit = mk('div', 'vkm-dp-time-unit');
+                const hUp = mk('button', 'vkm-dp-time-step', { type: 'button', title: 'Increment hour' });
+                hUp.innerHTML = '▲';
+                const hInput = mk('input', 'vkm-dp-time-val', {
+                    type: 'text',
+                    inputmode: 'numeric',
+                    maxlength: '2',
+                    value: String(selHour).padStart(2, '0')
+                });
+                const hDown = mk('button', 'vkm-dp-time-step', { type: 'button', title: 'Decrement hour' });
+                hDown.innerHTML = '▼';
+                hUnit.appendChild(hUp);
+                hUnit.appendChild(hInput);
+                hUnit.appendChild(hDown);
+
+                // Separator
+                const sep = mk('span', 'vkm-dp-time-sep');
+                sep.textContent = ':';
+
+                // Minute
+                const mUnit = mk('div', 'vkm-dp-time-unit');
+                const mUp = mk('button', 'vkm-dp-time-step', { type: 'button', title: 'Increment minute' });
+                mUp.innerHTML = '▲';
+                const mInput = mk('input', 'vkm-dp-time-val', {
+                    type: 'text',
+                    inputmode: 'numeric',
+                    maxlength: '2',
+                    value: String(selMinute).padStart(2, '0')
+                });
+                const mDown = mk('button', 'vkm-dp-time-step', { type: 'button', title: 'Decrement minute' });
+                mDown.innerHTML = '▼';
+                mUnit.appendChild(mUp);
+                mUnit.appendChild(mInput);
+                mUnit.appendChild(mDown);
+
+                inputsWrap.appendChild(hUnit);
+                inputsWrap.appendChild(sep);
+                inputsWrap.appendChild(mUnit);
+                timeRow.appendChild(inputsWrap);
+
+                // Actions
+                const actions = mk('div', 'vkm-dp-time-actions');
+                const nowBtn = mk('button', 'vkm-dp-btn-now', { type: 'button', title: 'Set to current time' });
+                nowBtn.textContent = 'Now';
+                const doneBtn = mk('button', 'vkm-dp-btn-done', { type: 'button' });
+                doneBtn.textContent = 'Done';
+                actions.appendChild(nowBtn);
+                actions.appendChild(doneBtn);
+
+                timeFooter.appendChild(timeRow);
+                timeFooter.appendChild(actions);
+
+                function setHourMinute(h, m, rerender = false) {
+                    selHour = h;
+                    selMinute = m;
+                    if (!selDay) {
+                        selDay = today.getDate();
+                        selMonth = today.getMonth() + 1;
+                        selYear = today.getFullYear();
+                        viewYear = selYear;
+                        viewMonth = selMonth;
+                        rerender = true;
+                    }
+                    const iso = currentIso();
+                    el.value = isoToDisplay(iso);
+                    saveValue(iso);
+                    if (rerender) {
+                        renderPopup();
+                    } else {
+                        hInput.value = String(selHour).padStart(2, '0');
+                        mInput.value = String(selMinute).padStart(2, '0');
+                        const longDayEl = popup.querySelector('.vkm-dp-long-day');
+                        if (longDayEl && selDay && selMonth && selYear) {
+                            longDayEl.textContent =
+                                longDayName(selYear, selMonth, selDay) + ' ' +
+                                String(selDay).padStart(2, '0') + ' ' +
+                                monthName(selYear, selMonth) + ' ' +
+                                selYear;
+                        }
+                    }
+                }
+
+                const adjustHour = (delta) => {
+                    let h = (selHour + delta) % 24;
+                    if (h < 0) h += 24;
+                    setHourMinute(h, selMinute);
+                };
+
+                const adjustMinute = (delta) => {
+                    let m = (selMinute + delta) % 60;
+                    if (m < 0) m += 60;
+                    setHourMinute(selHour, m);
+                };
+
+                hUp.addEventListener('click', e => { e.stopPropagation(); adjustHour(1); });
+                hDown.addEventListener('click', e => { e.stopPropagation(); adjustHour(-1); });
+                mUp.addEventListener('click', e => { e.stopPropagation(); adjustMinute(5); });
+                mDown.addEventListener('click', e => { e.stopPropagation(); adjustMinute(-5); });
+
+                hInput.addEventListener('wheel', e => {
+                    e.preventDefault(); e.stopPropagation();
+                    adjustHour(e.deltaY < 0 ? 1 : -1);
+                }, { passive: false });
+
+                mInput.addEventListener('wheel', e => {
+                    e.preventDefault(); e.stopPropagation();
+                    adjustMinute(e.deltaY < 0 ? 1 : -1);
+                }, { passive: false });
+
+                hInput.addEventListener('keydown', e => {
+                    if (e.key === 'ArrowUp') { e.preventDefault(); adjustHour(1); }
+                    else if (e.key === 'ArrowDown') { e.preventDefault(); adjustHour(-1); }
+                    else if (e.key === 'Enter') { e.preventDefault(); hInput.blur(); }
+                });
+
+                mInput.addEventListener('keydown', e => {
+                    if (e.key === 'ArrowUp') { e.preventDefault(); adjustMinute(1); }
+                    else if (e.key === 'ArrowDown') { e.preventDefault(); adjustMinute(-1); }
+                    else if (e.key === 'Enter') { e.preventDefault(); mInput.blur(); }
+                });
+
+                hInput.addEventListener('click', e => e.stopPropagation());
+                hInput.addEventListener('focus', () => hInput.select());
+                hInput.addEventListener('input', () => {
+                    const val = hInput.value.replace(/\D/g, '');
+                    if (val.length === 2) {
+                        let h = parseInt(val) || 0;
+                        if (h > 23) h = 23;
+                        setHourMinute(h, selMinute);
+                        mInput.focus();
+                    }
+                });
+                hInput.addEventListener('blur', () => {
+                    let h = parseInt(hInput.value) || 0;
+                    if (h > 23) h = 23;
+                    if (h < 0) h = 0;
+                    setHourMinute(h, selMinute);
+                });
+
+                mInput.addEventListener('click', e => e.stopPropagation());
+                mInput.addEventListener('focus', () => mInput.select());
+                mInput.addEventListener('input', () => {
+                    const val = mInput.value.replace(/\D/g, '');
+                    if (val.length === 2) {
+                        let m = parseInt(val) || 0;
+                        if (m > 59) m = 59;
+                        setHourMinute(selHour, m);
+                    }
+                });
+                mInput.addEventListener('blur', () => {
+                    let m = parseInt(mInput.value) || 0;
+                    if (m > 59) m = 59;
+                    if (m < 0) m = 0;
+                    setHourMinute(selHour, m);
+                });
+
+                nowBtn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const n = new Date();
+                    selYear = n.getFullYear();
+                    selMonth = n.getMonth() + 1;
+                    selDay = n.getDate();
+                    viewYear = selYear;
+                    viewMonth = selMonth;
+                    setHourMinute(n.getHours(), n.getMinutes(), true);
+                });
+
+                doneBtn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    close();
+                });
+
+                popup.appendChild(timeFooter);
+            }
         }
 
         // ── Navigation / selection ───────────────────────────────────────────
@@ -459,10 +792,14 @@ export default function (Alpine) {
             selDay   = day;
             selMonth = viewMonth;
             selYear  = viewYear;
-            const iso = `${viewYear}-${String(viewMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const iso = currentIso();
             el.value = isoToDisplay(iso);
             saveValue(iso);
-            close();
+            if (hasTime) {
+                renderPopup();
+            } else {
+                close();
+            }
         }
 
         // ── Open / close ─────────────────────────────────────────────────────
@@ -489,6 +826,16 @@ export default function (Alpine) {
 
         // ── Typed input with mask ────────────────────────────────────────────
         function applyMask(raw) {
+            if (hasTime) {
+                const digits = raw.replace(/\D/g, '').slice(0, 12);
+                let out = digits.slice(0, 4);
+                if (digits.length > 4) out += '/' + digits.slice(4, 6);
+                if (digits.length > 6) out += '/' + digits.slice(6, 8);
+                if (digits.length > 8) out += ' ' + digits.slice(8, 10);
+                if (digits.length > 10) out += ':' + digits.slice(10, 12);
+                return out;
+            }
+
             const digits = raw.replace(/\D/g, '').slice(0, 8);
             let out = digits.slice(0, 4);
             if (digits.length > 4) out += '/' + digits.slice(4, 6);
@@ -501,12 +848,11 @@ export default function (Alpine) {
             // Only rewrite if actually different to avoid cursor jump
             if (el.value !== masked) el.value = masked;
 
-            if (masked.length === 10) {
+            const targetLen = hasTime ? 16 : 10;
+            if (masked.length === targetLen) {
                 const iso = displayToIso(masked);
                 if (iso) {
-                    const [y, m, d] = iso.split('-').map(Number);
-                    selYear  = y; selMonth = m; selDay = d;
-                    viewYear = y; viewMonth = m;
+                    setFromIso(iso, false);
                     saveValue(iso);
                     if (isOpen) renderPopup();
                 }
@@ -519,7 +865,7 @@ export default function (Alpine) {
         // ── Event listeners ──────────────────────────────────────────────────
         el.addEventListener('click', () => isOpen ? close() : open());
         el.addEventListener('input', onInput);
-        el.setAttribute('placeholder', 'YYYY/MM/DD');
+        el.setAttribute('placeholder', hasTime ? 'YYYY/MM/DD HH:mm' : 'YYYY/MM/DD');
         el.setAttribute('autocomplete', 'off');
 
         // Click-outside (capture phase catches it before anything else)

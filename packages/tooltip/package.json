@@ -1,7 +1,7 @@
 {
   "name": "@vkm-js/tooltip",
   "version": "1.2.0",
-  "description": "An Alpinejs tooltip.",
+  "description": "An Alpine.js tooltip and popover directive powered by Floating UI.",
   "homepage": "https://github.com/vkm-apps",
   "repository": {
     "type": "git",
@@ -11,13 +11,15 @@
   "license": "MIT",
   "main": "dist/module.cjs.js",
   "module": "dist/module.esm.js",
-  "unpkg": "build/cdn.min.js",
+  "unpkg": "dist/cdn.min.js",
   "dependencies": {},
   "peerDependencies": {
-    "alpinejs": "^3.0.0"
+    "alpinejs": "^3.0.0",
+    "@floating-ui/dom": "^1.7.0"
   },
   "keywords": [
     "Tooltip",
+    "Popover",
     "Alpine",
     "Alpine JS",
     "Plugin",

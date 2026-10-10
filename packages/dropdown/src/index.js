@@ -1,21 +1,43 @@
 export default function (Alpine) {
     Alpine.data('dropdown', () => ({
         open: false,
-        exitHover: false,
+        exitHover: null,
         keyboardTrigger: false,
+
         toggle() {
-            this.open = this.open ? this.close() : true;
+            this.open ? this.close() : this.openDropdown();
+        },
+        openDropdown() {
+            this.open = true;
         },
         close(focusAfter) {
             this.open = false;
             this.keyboardTrigger = false;
-            focusAfter && focusAfter.focus();
+            this.clearHover();
+            if (focusAfter && typeof focusAfter.focus === 'function') {
+                focusAfter.focus();
+            }
+        },
+        clearHover() {
+            if (this.exitHover) {
+                clearTimeout(this.exitHover);
+                this.exitHover = null;
+            }
+        },
+        startHoverClose() {
+            this.clearHover();
+            this.exitHover = setTimeout(() => {
+                this.close();
+            }, 150); // 150ms buffer to cross the gap to the teleported menu
         }
     }));
 
-    Alpine.directive('dropdown', (el, {modifiers}, {cleanup}) => {
-        let {triggerEl, dropdownEl, position, closeOnClickInside, isHoverable} = getDropdownOptions(el, modifiers);
-        const placement = 'x-anchor.' + (position || 'bottom-start');
+    Alpine.directive('dropdown', (el, { modifiers }, { cleanup }) => {
+        // Prevent double initialization during Livewire morphs
+        if (el._x_dropdown_initialized) return;
+        el._x_dropdown_initialized = true;
+
+        let { triggerEl, dropdownEl, position, closeOnClickInside, isHoverable } = getDropdownOptions(el, modifiers);
 
         if (!triggerEl || !dropdownEl) {
             return !triggerEl
@@ -23,70 +45,113 @@ export default function (Alpine) {
                 : console.warn('Dropdown JS: Attribute data-dropdown is not set!');
         }
 
+        // Generate stable IDs for DOM resilience
         if (!el.id) {
-            //random id for parent element if not exists
-            el.id = crypto.getRandomValues(new Uint32Array(1))[0].toString(36) + Date.now().toString(36);
+            el.id = 'dd-' + (crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36));
         }
-
-        //Popover wrapper add x-data
-        el.setAttribute('x-data', 'dropdown');
-        el.classList.add('relative');
-        el.setAttribute('x-on:keydown.esc.window', 'close()');
-        el.setAttribute('x-on:keydown.escape.prevent.stop', 'close()');
-        // el.setAttribute('x-on:focusin.window', '$refs.panel.contains($event.target) && close()');
-
-        //Element on click via data-toggle
-        if (isHoverable) {
-            triggerEl.setAttribute('x-on:mouseover', 'open = true');
-            el.setAttribute('x-on:mouseenter', "exitHover ? clearTimeout(exitHover) : true");
-            el.setAttribute('x-on:mouseleave.prevent', "exitHover = setTimeout(() => { open = false }, 50)");
-        }
-        else {
-            triggerEl.setAttribute('x-on:click', 'toggle()');
-        }
-
         if (!triggerEl.id) {
             triggerEl.id = `btn-${el.id}`;
         }
 
+        // 1. Ensure el has x-data="dropdown" initialized
+        if (!el.hasAttribute('x-data')) {
+            el.setAttribute('x-data', 'dropdown');
+        }
+
+        el.classList.add('relative');
+        el.setAttribute('x-on:keydown.esc.window', 'close($refs.dropdownBtn)');
+        el.setAttribute('x-on:keydown.escape.prevent.stop', 'close($refs.dropdownBtn)');
+
+        // 2. Configure Trigger Element
         triggerEl.setAttribute('x-ref', 'dropdownBtn');
-        triggerEl.setAttribute('x-on:keydown.space.prevent', 'keyboardTrigger = true');
-        triggerEl.setAttribute('x-on:keydown.enter.prevent', 'keyboardTrigger = true');
-        triggerEl.setAttribute('x-on:keydown.down.prevent', 'keyboardTrigger = true');
         triggerEl.setAttribute(':aria-expanded', '(open || keyboardTrigger).toString()');
         triggerEl.setAttribute('aria-haspopup', 'true');
         triggerEl.setAttribute('aria-label', 'Dropdown');
 
-        //Popover element data-popover
-        dropdownEl.setAttribute('x-cloak', '');
-        dropdownEl.setAttribute('x-transition.origin.top.left', '');
-        dropdownEl.setAttribute('x-trap', 'keyboardTrigger');
-        dropdownEl.setAttribute(placement, '$refs.dropdownBtn');
-        dropdownEl.setAttribute('x-ref', 'panel');
-        dropdownEl.setAttribute('x-show', 'open || keyboardTrigger');
+        if (isHoverable) {
+            triggerEl.setAttribute('x-on:mouseenter', 'clearHover(); open = true');
+            triggerEl.setAttribute('x-on:mouseleave', 'startHoverClose()');
+        } else {
+            triggerEl.setAttribute('x-on:click', 'toggle()');
+        }
+
+        triggerEl.setAttribute('x-on:keydown.space.prevent', 'keyboardTrigger = true; open = true');
+        triggerEl.setAttribute('x-on:keydown.enter.prevent', 'keyboardTrigger = true; open = true');
+        triggerEl.setAttribute('x-on:keydown.down.prevent', 'keyboardTrigger = true; open = true');
+
+        // 3. Teleport & Template Setup
+        // x-teleport strictly requires a <template> tag.
+        let templateEl;
+        let panelEl;
+
+        if (dropdownEl.tagName.toLowerCase() === 'template') {
+            templateEl = dropdownEl;
+            panelEl = templateEl.content.firstElementChild;
+            if (!panelEl) {
+                console.warn('Dropdown JS: <template data-dropdown> must contain a single root element.');
+                return;
+            }
+        } else {
+            // If data-dropdown is a <div>, wrap it into a <template> dynamically
+            templateEl = document.createElement('template');
+            // If inside Livewire, prevent morph engine from replacing the dynamic template
+            templateEl.setAttribute('wire:ignore', '');
+            dropdownEl.parentNode.insertBefore(templateEl, dropdownEl);
+            templateEl.content.appendChild(dropdownEl);
+            panelEl = dropdownEl;
+        }
+
+        templateEl.setAttribute('x-teleport', 'body');
+
+        // 4. Configure Teleported Panel Element
+        const placement = position || 'bottom-start';
+        const isFixed = modifiers.includes('fixed') ? '.fixed' : '';
+        const anchorAttr = `x-anchor${isFixed}.${placement}`;
+
+        // Fallback to document.getElementById if $refs is resolving during a Livewire morph cycle
+        panelEl.setAttribute(anchorAttr, `$refs.dropdownBtn || document.getElementById('${triggerEl.id}')`);
+        panelEl.setAttribute('x-ref', 'panel');
+        panelEl.setAttribute('x-cloak', '');
+        panelEl.setAttribute('x-show', 'open || keyboardTrigger');
+        panelEl.setAttribute('x-trap', 'keyboardTrigger');
+        panelEl.setAttribute('x-transition.origin.top.left', '');
+        panelEl.setAttribute('role', 'menu');
+        panelEl.setAttribute('aria-orientation', 'vertical');
+        panelEl.setAttribute('aria-labelledby', triggerEl.id);
 
         if (!modifiers.includes('custom')) {
-            dropdownEl.classList.add('absolute', 'mt-2', 'shadow-lg', 'backdrop-blur-lg', 'bg-white/70', 'dark:bg-black/70', 'rounded-sm', 'flex', 'flex-col', 'w-full', 'min-w-72', 'z-1000', 'py-2');
-        }
-        else {
-            dropdownEl.classList.add('absolute', 'z-1000');
+            panelEl.classList.add(
+                'absolute', 'mt-2', 'shadow-lg', 'backdrop-blur-lg',
+                'bg-white/70', 'dark:bg-black/70', 'rounded-sm',
+                'flex', 'flex-col', 'w-full', 'min-w-72', 'z-1000', 'py-2'
+            );
+        } else {
+            panelEl.classList.add('absolute', 'z-1000');
         }
 
-        dropdownEl.setAttribute('x-on:click.outside', 'close()');
+        // Fix click.outside racing with trigger button
+        panelEl.setAttribute('x-on:click.outside', `if (!$refs.dropdownBtn || !$refs.dropdownBtn.contains($event.target)) close()`);
 
         if (closeOnClickInside) {
-            dropdownEl.setAttribute('x-on:click', 'close()');
+            panelEl.setAttribute('x-on:click', 'close($refs.dropdownBtn)');
         }
 
-        dropdownEl.setAttribute('x-on:keydown.down.prevent', '$focus.wrap().next()');
-        dropdownEl.setAttribute('x-on:keydown.up.prevent', '$focus.wrap().previous()');
-        dropdownEl.setAttribute('x-on:keydown.tab', 'close()');
-        dropdownEl.setAttribute('x-on:keydown.shift.tab', 'close()');
-        dropdownEl.setAttribute('role', 'menu');
-        dropdownEl.setAttribute('aria-orientation', 'vertical');
-        dropdownEl.setAttribute('aria-labelledby', triggerEl.id);
+        // Hover handling on teleported element
+        if (isHoverable) {
+            panelEl.setAttribute('x-on:mouseenter', 'clearHover()');
+            panelEl.setAttribute('x-on:mouseleave', 'startHoverClose()');
+        }
 
-        el.setAttribute('x-data', 'dropdown');
+        // Keyboard navigation
+        panelEl.setAttribute('x-on:keydown.down.prevent', '$focus.wrap().next()');
+        panelEl.setAttribute('x-on:keydown.up.prevent', '$focus.wrap().previous()');
+        panelEl.setAttribute('x-on:keydown.tab', 'close()');
+        panelEl.setAttribute('x-on:keydown.shift.tab', 'close()');
+
+        // 5. Cleanup memory leaks during SPA navigation (wire:navigate)
+        cleanup(() => {
+            delete el._x_dropdown_initialized;
+        });
     });
 
     function getDropdownOptions(el, modifiers) {
@@ -96,7 +161,7 @@ export default function (Alpine) {
             isHoverable = modifiers.includes('hover'),
             closeOnClickInside = modifiers.includes('select');
 
-        return {triggerEl, dropdownEl, position, closeOnClickInside, isHoverable};
+        return { triggerEl, dropdownEl, position, closeOnClickInside, isHoverable };
     }
 
     function getPlacement(modifiers) {
