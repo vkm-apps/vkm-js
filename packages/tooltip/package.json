@@ -1,6 +1,6 @@
 {
   "name": "@vkm-js/tooltip",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "An Alpine.js tooltip and popover directive powered by Floating UI.",
   "homepage": "https://github.com/vkm-apps",
   "repository": {
