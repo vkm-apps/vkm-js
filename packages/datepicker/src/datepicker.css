@@ -1,3 +1,5 @@
+@reference "tailwindcss";
+
 /* Datepicker Base Container */
 .vkm-dp {
     @apply fixed z-[9999] w-72 min-w-72 rounded-xl shadow-2xl backdrop-blur-md overflow-hidden select-none font-sans;
@@ -70,7 +72,7 @@
 }
 
 .vkm-dp-day.today:not(.selected) {
-    @apply outline outline-1.5 outline-black/30 dark:outline-white/35 font-semibold;
+    @apply outline outline-1 outline-black/30 dark:outline-white/35 font-semibold;
 }
 
 .vkm-dp-day.selected {
