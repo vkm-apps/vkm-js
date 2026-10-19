@@ -1,201 +1,69 @@
 export default function (Alpine) {
 
-    // ── Styles injected once ────────────────────────────────────────────────────
+    // ── Styles: Checks if datepicker.css is already loaded via stylesheet, falls back to injected styles ──
     function injectStyles() {
-        if (document.getElementById('vkm-dp-styles')) return;
+        if (typeof document === 'undefined' || document.getElementById('vkm-dp-styles')) return;
+
+        // Check if datepicker.css is already loaded via stylesheet
+        try {
+            const testEl = document.createElement('div');
+            testEl.className = 'vkm-dp';
+            document.body.appendChild(testEl);
+            const isLoaded = window.getComputedStyle(testEl).position === 'fixed';
+            testEl.remove();
+            if (isLoaded) return;
+        } catch {}
+
         const s = document.createElement('style');
         s.id = 'vkm-dp-styles';
         s.textContent = `
             .vkm-dp {
                 position: fixed; z-index: 9999;
                 width: 288px; min-width: 288px;
-                background: #fff;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(12px);
                 border-radius: 12px;
-                box-shadow: 0 20px 60px rgba(0,0,0,.15), 0 4px 16px rgba(0,0,0,.1);
-                border: 1px solid rgba(0,0,0,.06);
-                font-family: inherit;
-                color: #111827;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+                border: 1px solid rgba(0, 0, 0, 0.15);
+                color: rgba(0, 0, 0, 0.85);
                 display: none;
                 overflow: hidden;
                 user-select: none;
             }
             .dark .vkm-dp {
-                background: #1e293b;
-                color: #f1f5f9;
-                border-color: rgba(255,255,255,.08);
-                box-shadow: 0 20px 60px rgba(0,0,0,.5), 0 4px 16px rgba(0,0,0,.3);
+                background: rgba(0, 0, 0, 0.88);
+                color: rgba(255, 255, 255, 0.9);
+                border-color: rgba(255, 255, 255, 0.2);
             }
-
-            /* Header */
-            .vkm-dp-header {
-                display: flex; align-items: center; justify-content: space-between;
-                padding: 14px 14px 8px;
-            }
-            .vkm-dp-nav {
-                background: none; border: none; cursor: pointer;
-                padding: 4px; border-radius: 6px;
-                color: inherit; display: flex; align-items: center;
-                opacity: .6; transition: opacity .15s;
-            }
-            .vkm-dp-nav:hover { opacity: 1; background: rgba(0,0,0,.05); }
-            .dark .vkm-dp-nav:hover { background: rgba(255,255,255,.08); }
-
-            .vkm-dp-center {
-                display: flex; flex-direction: column;
-                align-items: center; gap: 3px; flex: 1;
-            }
-            .vkm-dp-month-year {
-                display: flex; align-items: center; gap: 6px;
-            }
-            .vkm-dp-month-btn, .vkm-dp-year-btn {
-                background: none; border: none; cursor: pointer;
-                font-weight: 700; font-size: 14px; padding: 2px 6px;
-                border-radius: 5px; color: inherit; transition: background .15s;
-            }
-            .vkm-dp-month-btn:hover, .vkm-dp-year-btn:hover {
-                color: #3b82f6; background: rgba(59,130,246,.08);
-            }
-            .vkm-dp-year-input {
-                width: 64px; border: 1px solid #d1d5db; border-radius: 5px;
-                padding: 2px 4px; text-align: center;
-                font-size: 14px; font-weight: 700; background: inherit; color: inherit;
-            }
-            .dark .vkm-dp-year-input { border-color: #475569; }
-            .vkm-dp-long-day {
-                font-size: 11px; color: #9ca3af; font-weight: 400;
-            }
-
-            /* Month list */
-            .vkm-dp-month-list {
-                display: grid; grid-template-columns: repeat(3, 1fr);
-                gap: 4px; padding: 6px 12px 14px;
-            }
-            .vkm-dp-month-item {
-                padding: 7px 4px; border: none; border-radius: 7px;
-                cursor: pointer; font-size: 12px; background: transparent;
-                color: inherit; transition: background .15s;
-            }
-            .vkm-dp-month-item:hover { background: rgba(59,130,246,.1); }
-            .dark .vkm-dp-month-item:hover { background: rgba(255,255,255,.08); }
-            .vkm-dp-month-item.active {
-                background: #3b82f6; color: #fff; font-weight: 600;
-            }
-
-            /* Day grid */
-            .vkm-dp-grid {
-                display: grid; grid-template-columns: repeat(7, 1fr);
-                gap: 2px; padding: 4px 12px 14px;
-            }
-            .vkm-dp-wd {
-                text-align: center; font-size: 10px;
-                font-weight: 600; color: #9ca3af; padding: 4px 0;
-            }
-            .vkm-dp-day {
-                border: none; border-radius: 7px; cursor: pointer;
-                padding: 6px 0; font-size: 12px; text-align: center;
-                width: 100%; background: transparent; color: inherit;
-                transition: background .12s, color .12s;
-                position: relative;
-            }
-            .vkm-dp-day:hover:not(:disabled):not(.selected) {
-                background: rgba(59,130,246,.08);
-            }
-            .dark .vkm-dp-day:hover:not(:disabled):not(.selected) {
-                background: rgba(255,255,255,.07);
-            }
-            .vkm-dp-day.today:not(.selected) {
-                outline: 1.5px solid #93c5fd; font-weight: 600; color: #3b82f6;
-            }
-            .dark .vkm-dp-day.today:not(.selected) { outline-color: #3b82f6; }
-            .vkm-dp-day.selected {
-                background: #3b82f6; color: #fff; font-weight: 700;
-            }
-            .vkm-dp-day.weekend { color: #9ca3af; }
-            .vkm-dp-day.selected.weekend { color: #fff; }
-            .vkm-dp-day:disabled {
-                opacity: .25; cursor: default;
-            }
-
-            /* Time selection */
-            .vkm-dp-time {
-                display: flex; align-items: center; justify-content: space-between;
-                padding: 8px 12px;
-                border-top: 1px solid rgba(0,0,0,.08);
-                background: #f8fafc;
-            }
-            .dark .vkm-dp-time {
-                border-top-color: rgba(255,255,255,.08);
-                background: #0f172a;
-            }
-            .vkm-dp-time-left {
-                display: flex; align-items: center; gap: 8px;
-            }
-            .vkm-dp-time-icon {
-                color: #94a3b8; display: flex; align-items: center;
-            }
-            .dark .vkm-dp-time-icon { color: #64748b; }
-            .vkm-dp-time-inputs {
-                display: flex; align-items: center; gap: 2px;
-            }
-            .vkm-dp-time-unit {
-                display: flex; flex-direction: column; align-items: center;
-            }
-            .vkm-dp-time-step {
-                background: none; border: none; cursor: pointer;
-                font-size: 7px; line-height: 1; padding: 2px 4px;
-                color: #64748b; opacity: .7; transition: opacity .12s, color .12s;
-                user-select: none;
-            }
-            .vkm-dp-time-step:hover {
-                opacity: 1; color: #3b82f6;
-            }
-            .dark .vkm-dp-time-step:hover {
-                opacity: 1; color: #60a5fa;
-            }
-            .vkm-dp-time-val {
-                width: 32px; height: 26px; border: 1px solid #cbd5e1;
-                border-radius: 5px; text-align: center;
-                font-size: 13px; font-weight: 700; background: #fff;
-                color: inherit; outline: none; padding: 0;
-                transition: border-color .15s, box-shadow .15s;
-            }
-            .vkm-dp-time-val:focus {
-                border-color: #3b82f6;
-                box-shadow: 0 0 0 2px rgba(59,130,246,.2);
-            }
-            .dark .vkm-dp-time-val {
-                background: #1e293b; border-color: #475569; color: #f1f5f9;
-            }
-            .dark .vkm-dp-time-val:focus {
-                border-color: #3b82f6;
-                box-shadow: 0 0 0 2px rgba(59,130,246,.3);
-            }
-            .vkm-dp-time-sep {
-                font-weight: 700; font-size: 13px; color: #94a3b8;
-                user-select: none; margin: 0 1px;
-            }
-            .vkm-dp-time-actions {
-                display: flex; align-items: center; gap: 6px;
-            }
-            .vkm-dp-btn-now, .vkm-dp-btn-done {
-                border: none; cursor: pointer; font-size: 12px; font-weight: 600;
-                border-radius: 6px; padding: 5px 10px;
-                transition: background .15s, color .15s;
-            }
-            .vkm-dp-btn-now {
-                background: transparent; color: #64748b;
-            }
-            .vkm-dp-btn-now:hover {
-                background: rgba(0,0,0,.06); color: #0f172a;
-            }
-            .dark .vkm-dp-btn-now { color: #94a3b8; }
-            .dark .vkm-dp-btn-now:hover {
-                background: rgba(255,255,255,.08); color: #f8fafc;
-            }
-            .vkm-dp-btn-done {
-                background: #3b82f6; color: #fff;
-            }
-            .vkm-dp-btn-done:hover { background: #2563eb; }
+            .vkm-dp-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 14px 8px; }
+            .vkm-dp-nav { background: none; border: none; cursor: pointer; padding: 4px; border-radius: 6px; color: inherit; opacity: .6; }
+            .vkm-dp-center { display: flex; flex-direction: column; align-items: center; flex: 1; }
+            .vkm-dp-month-year { display: flex; align-items: center; gap: 6px; }
+            .vkm-dp-month-btn, .vkm-dp-year-btn { background: none; border: none; cursor: pointer; font-weight: 700; font-size: 14px; border-radius: 6px; color: inherit; }
+            .vkm-dp-year-input { width: 64px; border: 1px solid rgba(0,0,0,0.2); border-radius: 6px; text-align: center; font-size: 14px; font-weight: 700; background: transparent; color: inherit; }
+            .vkm-dp-long-day { font-size: 11px; opacity: .5; }
+            .vkm-dp-month-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 6px 12px 14px; }
+            .vkm-dp-month-item { padding: 7px 4px; border: none; border-radius: 7px; cursor: pointer; font-size: 12px; background: transparent; color: inherit; }
+            .vkm-dp-month-item.active { background: rgba(0,0,0,0.85); color: #fff; }
+            .dark .vkm-dp-month-item.active { background: rgba(255,255,255,0.9); color: #000; }
+            .vkm-dp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 4px 12px 14px; }
+            .vkm-dp-wd { text-align: center; font-size: 10px; font-weight: 600; opacity: .4; padding: 4px 0; }
+            .vkm-dp-day { border: none; border-radius: 7px; cursor: pointer; padding: 6px 0; font-size: 12px; text-align: center; width: 100%; background: transparent; color: inherit; }
+            .vkm-dp-day.today:not(.selected) { outline: 1.5px solid rgba(0,0,0,0.3); }
+            .dark .vkm-dp-day.today:not(.selected) { outline-color: rgba(255,255,255,0.35); }
+            .vkm-dp-day.selected { background: rgba(0,0,0,0.85); color: #fff; font-weight: 700; }
+            .dark .vkm-dp-day.selected { background: rgba(255,255,255,0.9); color: #000; }
+            .vkm-dp-time { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-top: 1px solid rgba(0,0,0,0.08); background: rgba(0,0,0,0.03); }
+            .vkm-dp-time-left { display: flex; align-items: center; gap: 8px; }
+            .vkm-dp-time-inputs { display: flex; align-items: center; gap: 2px; }
+            .vkm-dp-time-step { background: none; border: none; cursor: pointer; font-size: 7px; color: inherit; opacity: .6; }
+            .vkm-dp-time-val { width: 32px; height: 26px; border: 1px solid rgba(0,0,0,0.2); border-radius: 5px; text-align: center; font-size: 13px; font-weight: 700; background: transparent; color: inherit; }
+            .vkm-dp-time-sep { font-weight: 700; font-size: 13px; opacity: .4; }
+            .vkm-dp-time-actions { display: flex; align-items: center; gap: 6px; }
+            .vkm-dp-btn-now, .vkm-dp-btn-done { border: none; cursor: pointer; font-size: 12px; font-weight: 600; border-radius: 6px; padding: 5px 10px; }
+            .vkm-dp-btn-now { background: transparent; color: inherit; opacity: .7; }
+            .vkm-dp-btn-done { background: rgba(0,0,0,0.85); color: #fff; }
+            .dark .vkm-dp-btn-done { background: rgba(255,255,255,0.9); color: #000; }
         `;
         document.head.appendChild(s);
     }
@@ -528,11 +396,21 @@ export default function (Alpine) {
             header.appendChild(nextBtn);
             popup.appendChild(header);
 
+            // Resolve user Tailwind class overrides from window.vkmConfig.datepicker
+            const userConfig = (typeof window !== 'undefined' && window.vkmConfig && window.vkmConfig.datepicker) || {};
+            const selectedCls = userConfig.selected || (userConfig.colors && (userConfig.colors.selected || userConfig.colors.active)) || '';
+            const todayCls = userConfig.today || (userConfig.colors && userConfig.colors.today) || '';
+
             // ── Month list ───────────────────────────────────────────────────
             if (showMonths) {
                 const grid = mk('div', 'vkm-dp-month-list');
                 for (let m = 1; m <= 12; m++) {
-                    const btn = mk('button', 'vkm-dp-month-item' + (m === viewMonth ? ' active' : ''), { type: 'button' });
+                    const isMActive = (m === viewMonth);
+                    let mCls = 'vkm-dp-month-item';
+                    if (isMActive) {
+                        mCls += selectedCls ? ` ${selectedCls}` : ' active';
+                    }
+                    const btn = mk('button', mCls, { type: 'button' });
                     btn.textContent = new Date(viewYear, m - 1, 1).toLocaleString(locale, { month: 'short' });
                     btn.addEventListener('click', e => {
                         e.stopPropagation();
@@ -573,9 +451,13 @@ export default function (Alpine) {
                 const isDis  = isDisabled(d);
 
                 let cls = 'vkm-dp-day';
-                if (isSel)  cls += ' selected';
-                if (isTod)  cls += ' today';
-                if (isWknd) cls += ' weekend';
+                if (isSel) {
+                    cls += selectedCls ? ` ${selectedCls}` : ' selected';
+                }
+                if (isTod && !isSel) {
+                    cls += todayCls ? ` ${todayCls}` : ' today';
+                }
+                if (isWknd && !isSel) cls += ' weekend';
 
                 const btn = mk('button', cls, { type: 'button' });
                 btn.textContent = d;
@@ -648,7 +530,8 @@ export default function (Alpine) {
                 const actions = mk('div', 'vkm-dp-time-actions');
                 const nowBtn = mk('button', 'vkm-dp-btn-now', { type: 'button', title: 'Set to current time' });
                 nowBtn.textContent = 'Now';
-                const doneBtn = mk('button', 'vkm-dp-btn-done', { type: 'button' });
+                const doneBtnCls = 'vkm-dp-btn-done' + (selectedCls ? ` ${selectedCls}` : '');
+                const doneBtn = mk('button', doneBtnCls, { type: 'button' });
                 doneBtn.textContent = 'Done';
                 actions.appendChild(nowBtn);
                 actions.appendChild(doneBtn);
@@ -810,6 +693,22 @@ export default function (Alpine) {
             editYear   = false;
             if (!popup) {
                 popup = mk('div', 'vkm-dp');
+                const userConfig = (typeof window !== 'undefined' && window.vkmConfig && window.vkmConfig.datepicker) || {};
+
+                // Panel colors: Tailwind classes (string or object.panel) or default x-form theme
+                let panelClasses = 'vkm-dp-default-colors';
+                if (typeof userConfig.colors === 'string') {
+                    panelClasses = userConfig.colors;
+                } else if (userConfig.colors && typeof userConfig.colors.panel === 'string') {
+                    panelClasses = userConfig.colors.panel;
+                }
+                const colorList = panelClasses.split(/\s+/).filter(Boolean);
+                popup.classList.add(...colorList);
+
+                if (userConfig.classes) {
+                    const clsList = Array.isArray(userConfig.classes) ? userConfig.classes : userConfig.classes.split(' ').filter(Boolean);
+                    popup.classList.add(...clsList);
+                }
                 document.body.appendChild(popup);
             }
             popup.style.display = 'block';

@@ -10,11 +10,11 @@
   "author": "Vasilis Milopoulos",
   "license": "MIT",
   "main": "dist/module.cjs.js",
-  "module": "dist/module.esm.js",
+  "module": "src/index.js",
   "unpkg": "build/cdn.min.js",
   "dependencies": {},
   "peerDependencies": {
-    "alpinejs": "^3.0.0"
+    "alpinejs": "^3.17.0"
   },
   "keywords": [
     "Modal",

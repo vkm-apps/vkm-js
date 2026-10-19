@@ -1,0 +1,127 @@
+/* Datepicker Base Container */
+.vkm-dp {
+    @apply fixed z-[9999] w-72 min-w-72 rounded-xl shadow-2xl backdrop-blur-md overflow-hidden select-none font-sans;
+    display: none;
+}
+
+/* Default Theme (Translucent x-form design language) */
+.vkm-dp-default-colors {
+    @apply bg-white/95 dark:bg-black/90 text-black/80 dark:text-white/90 border border-black/20 dark:border-white/25;
+}
+
+/* Header */
+.vkm-dp-header {
+    @apply flex items-center justify-between p-3.5 pb-2;
+}
+
+.vkm-dp-nav {
+    @apply bg-transparent border-0 cursor-pointer p-1 rounded-md text-inherit flex items-center opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors;
+}
+
+.vkm-dp-center {
+    @apply flex flex-col items-center gap-1 flex-1;
+}
+
+.vkm-dp-month-year {
+    @apply flex items-center gap-1.5;
+}
+
+.vkm-dp-month-btn,
+.vkm-dp-year-btn {
+    @apply bg-transparent border-0 cursor-pointer font-bold text-sm px-1.5 py-0.5 rounded-md text-inherit hover:bg-black/5 dark:hover:bg-white/10 transition-colors;
+}
+
+.vkm-dp-year-input {
+    @apply w-16 border border-black/20 dark:border-white/25 rounded-md px-1 py-0.5 text-center text-sm font-bold bg-transparent text-inherit outline-none;
+}
+
+.vkm-dp-long-day {
+    @apply text-[11px] text-black/45 dark:text-white/45 font-normal;
+}
+
+/* Month List */
+.vkm-dp-month-list {
+    @apply grid grid-cols-3 gap-1 px-3 py-2 pb-3.5;
+}
+
+.vkm-dp-month-item {
+    @apply py-1.5 px-1 border-0 rounded-lg cursor-pointer text-xs bg-transparent text-inherit transition-colors hover:bg-black/5 dark:hover:bg-white/10 text-center;
+}
+
+.vkm-dp-month-item.active {
+    @apply bg-black/85 text-white dark:bg-white/90 dark:text-black font-semibold;
+}
+
+/* Day Grid */
+.vkm-dp-grid {
+    @apply grid grid-cols-7 gap-0.5 px-3 py-1 pb-3.5;
+}
+
+.vkm-dp-wd {
+    @apply text-center text-[10px] font-semibold text-black/40 dark:text-white/40 py-1;
+}
+
+.vkm-dp-day {
+    @apply border-0 rounded-lg cursor-pointer py-1.5 text-xs text-center w-full bg-transparent text-inherit transition-colors relative hover:bg-black/5 dark:hover:bg-white/10;
+}
+
+.vkm-dp-day:disabled {
+    @apply opacity-25 cursor-default hover:bg-transparent dark:hover:bg-transparent;
+}
+
+.vkm-dp-day.today:not(.selected) {
+    @apply outline outline-1.5 outline-black/30 dark:outline-white/35 font-semibold;
+}
+
+.vkm-dp-day.selected {
+    @apply bg-black/85 text-white dark:bg-white/90 dark:text-black font-bold;
+}
+
+.vkm-dp-day.weekend:not(.selected) {
+    @apply text-black/45 dark:text-white/45;
+}
+
+/* Time Selection Footer */
+.vkm-dp-time {
+    @apply flex items-center justify-between p-2 px-3 border-t border-black/10 dark:border-white/10 bg-black/5 dark:bg-white/5;
+}
+
+.vkm-dp-time-left {
+    @apply flex items-center gap-2;
+}
+
+.vkm-dp-time-icon {
+    @apply text-black/40 dark:text-white/45 flex items-center;
+}
+
+.vkm-dp-time-inputs {
+    @apply flex items-center gap-0.5;
+}
+
+.vkm-dp-time-unit {
+    @apply flex flex-col items-center;
+}
+
+.vkm-dp-time-step {
+    @apply bg-transparent border-0 cursor-pointer text-[7px] leading-none px-1 py-0.5 text-inherit opacity-60 hover:opacity-100 transition-opacity select-none;
+}
+
+.vkm-dp-time-val {
+    @apply w-8 h-6.5 border border-black/20 dark:border-white/25 rounded text-center text-xs font-bold bg-transparent text-inherit outline-none p-0 transition-colors focus:border-black/60 dark:focus:border-white/70;
+}
+
+.vkm-dp-time-sep {
+    @apply font-bold text-xs text-black/40 dark:text-white/40 select-none mx-0.5;
+}
+
+.vkm-dp-time-actions {
+    @apply flex items-center gap-1.5;
+}
+
+.vkm-dp-btn-now {
+    @apply border-0 cursor-pointer text-xs font-semibold rounded-md px-2.5 py-1 bg-transparent text-inherit opacity-70 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/10 transition-colors;
+}
+
+.vkm-dp-btn-done {
+    @apply border-0 cursor-pointer text-xs font-semibold rounded-md px-2.5 py-1 bg-black/85 text-white dark:bg-white/90 dark:text-black hover:opacity-90 transition-opacity;
+}

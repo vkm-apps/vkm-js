@@ -96,24 +96,74 @@ export default function (Alpine) {
         const createTooltipDOM = () => {
             if (tooltipWrapper) return;
 
+            const userConfig = (typeof window !== 'undefined' && window.vkmConfig && window.vkmConfig.tooltip) || {};
+
             // 1. Teleported container
             tooltipWrapper = document.createElement('div');
-            tooltipWrapper.className = 'vkm-tooltip-wrapper fixed z-[99999] top-0 left-0 transition-opacity duration-150 ease-out opacity-0';
+            tooltipWrapper.className = 'vkm-tooltip-wrapper';
             if (!isInteractive) {
                 tooltipWrapper.classList.add('pointer-events-none');
             }
 
-            // 2. Card surface with Tailwind 4 palette & subtle blur
+            // 2. Card surface with Tailwind 4 palette & backdrop blur
             tooltipCard = document.createElement('div');
             tooltipCard.id = tooltipId;
             tooltipCard.setAttribute('role', isClick ? 'dialog' : 'tooltip');
-            tooltipCard.className = `relative rounded-lg shadow-lg shadow-black/10 dark:shadow-black/50 border backdrop-blur-sm transition-all duration-150 ease-out transform scale-95 opacity-0 ${theme.bg}`;
+            tooltipCard.className = 'vkm-tooltip-card';
 
-            // Add standard padding if not custom template
+            // Detect user classes on template if present
+            const templateClasses = templateEl ? (templateEl.getAttribute('class') || '').split(/\s+/).filter(Boolean) : [];
+            const hasUserWidth = templateClasses.some(c => /^w-(?!max$)/.test(c));
+            const hasUserMinWidth = templateClasses.some(c => /^min-w-/.test(c));
+            const hasUserMaxWidth = templateClasses.some(c => /^max-w-/.test(c));
+            const hasUserBg = templateClasses.some(c => /^bg-/.test(c));
+            const hasUserBorder = templateClasses.some(c => /^(border$|border-)/.test(c));
+            const hasUserText = templateClasses.some(c => /^text-/.test(c));
+
+            // Sizing: w-max and min-w- (min 100px / user friendly min-width) unless user specified in template
+            if (!hasUserWidth) tooltipCard.classList.add('w-max');
+            if (!hasUserMinWidth) {
+                if (!templateEl) {
+                    tooltipCard.classList.add(userConfig.minWidth || 'min-w-24');
+                } else {
+                    tooltipCard.classList.add(userConfig.richMinWidth || 'min-w-48');
+                }
+            }
+            if (!hasUserMaxWidth) tooltipCard.classList.add('max-w-[calc(100vw-2rem)]');
+
+            // Typography & spacing
             if (!templateEl) {
-                tooltipCard.classList.add('px-2.5', 'py-1', 'text-xs', 'font-medium', 'whitespace-nowrap');
+                tooltipCard.classList.add('vkm-tooltip-text');
             } else {
-                tooltipCard.classList.add('p-3', 'text-sm');
+                tooltipCard.classList.add('vkm-tooltip-rich');
+            }
+
+            // Colors: user colors via app.js (window.vkmConfig.tooltip.colors) or theme
+            let appliedBg = theme.bg;
+            let appliedArrowBg = theme.arrowBg;
+
+            if (userConfig.colors) {
+                if (typeof userConfig.colors === 'string') {
+                    appliedBg = userConfig.colors;
+                    appliedArrowBg = userConfig.colors;
+                } else if (typeof userConfig.colors === 'object') {
+                    if (userConfig.colors.bg) appliedBg = userConfig.colors.bg;
+                    if (userConfig.colors.arrowBg) appliedArrowBg = userConfig.colors.arrowBg;
+                }
+            }
+
+            // Apply color classes unless user specified their own in template
+            const bgClasses = appliedBg.split(/\s+/).filter(Boolean);
+            bgClasses.forEach(cls => {
+                if (hasUserBg && /^bg-/.test(cls)) return;
+                if (hasUserBorder && /^(border$|border-)/.test(cls)) return;
+                if (hasUserText && /^text-/.test(cls)) return;
+                tooltipCard.classList.add(cls);
+            });
+
+            // Merge template custom classes
+            if (templateClasses.length > 0) {
+                tooltipCard.classList.add(...templateClasses);
             }
 
             // 3. Content holder
@@ -122,10 +172,10 @@ export default function (Alpine) {
             renderContent();
             tooltipCard.appendChild(contentEl);
 
-            // 4. Rotating square arrow (inherits background and borders flawlessly)
+            // 4. Rotating square arrow (inherits background and borders)
             if (!hasNoArrow) {
                 arrowEl = document.createElement('div');
-                arrowEl.className = `vkm-tooltip-arrow absolute w-2 h-2 rotate-45 pointer-events-none ${theme.arrowBg}`;
+                arrowEl.className = `vkm-tooltip-arrow ${appliedArrowBg}`;
                 tooltipCard.appendChild(arrowEl);
             }
 
@@ -180,8 +230,15 @@ export default function (Alpine) {
                         right: 'border-b border-l'
                     }[side];
 
+                    const userConfig = (typeof window !== 'undefined' && window.vkmConfig && window.vkmConfig.tooltip) || {};
+                    let currentArrowBg = theme.arrowBg;
+                    if (userConfig.colors) {
+                        if (typeof userConfig.colors === 'string') currentArrowBg = userConfig.colors;
+                        else if (userConfig.colors.arrowBg) currentArrowBg = userConfig.colors.arrowBg;
+                    }
+
                     // Reset previous border orientations
-                    arrowEl.className = `vkm-tooltip-arrow absolute w-2 h-2 rotate-45 pointer-events-none ${theme.arrowBg} ${arrowBorderClass}`;
+                    arrowEl.className = `vkm-tooltip-arrow ${currentArrowBg} ${arrowBorderClass}`;
 
                     const { x: arrowX, y: arrowY } = middlewareData.arrow;
                     Object.assign(arrowEl.style, {
@@ -210,13 +267,11 @@ export default function (Alpine) {
             // Bind autoUpdate loop
             cleanupAutoUpdate = autoUpdate(triggerEl, tooltipWrapper, updatePosition);
 
-            // Animate in
+            // Animate in via CSS classes
             requestAnimationFrame(() => {
                 if (!tooltipWrapper || !tooltipCard) return;
-                tooltipWrapper.classList.remove('opacity-0');
-                tooltipWrapper.classList.add('opacity-100');
-                tooltipCard.classList.remove('scale-95', 'opacity-0');
-                tooltipCard.classList.add('scale-100', 'opacity-100');
+                tooltipWrapper.classList.add('show');
+                tooltipCard.classList.add('show');
             });
         };
 
@@ -230,12 +285,10 @@ export default function (Alpine) {
             }
 
             if (tooltipCard) {
-                tooltipCard.classList.remove('scale-100', 'opacity-100');
-                tooltipCard.classList.add('scale-95', 'opacity-0');
+                tooltipCard.classList.remove('show');
             }
             if (tooltipWrapper) {
-                tooltipWrapper.classList.remove('opacity-100');
-                tooltipWrapper.classList.add('opacity-0');
+                tooltipWrapper.classList.remove('show');
             }
 
             setTimeout(() => {
@@ -343,31 +396,31 @@ function getPlacement(modifiers) {
     return placements.find(p => modifiers.includes(p)) || 'top';
 }
 
-// Modern Tailwind 4 theme palettes
-const themeMap = {
+// Modern Tailwind 4 theme palettes aligned with x-form translucent styling
+const defaultThemeMap = {
     dark: {
-        bg: 'bg-zinc-900/95 text-zinc-100 border-zinc-800 dark:bg-zinc-900/95 dark:text-zinc-100 dark:border-zinc-800',
-        arrowBg: 'bg-zinc-900/95 border-zinc-800 dark:bg-zinc-900/95 dark:border-zinc-800'
+        bg: 'bg-black/90 text-white/90 border-white/20 dark:bg-black/90 dark:text-white/90 dark:border-white/20',
+        arrowBg: 'bg-black/90 border-white/20 dark:bg-black/90 dark:border-white/20'
     },
     light: {
-        bg: 'bg-white/95 text-zinc-900 border-zinc-200 dark:bg-white/95 dark:text-zinc-900 dark:border-zinc-200',
-        arrowBg: 'bg-white/95 border-zinc-200 dark:bg-white/95 dark:border-zinc-200'
+        bg: 'bg-white/95 text-black/85 border-black/20 dark:bg-white/95 dark:text-black/85 dark:border-black/20',
+        arrowBg: 'bg-white/95 border-black/20 dark:bg-white/95 dark:border-black/20'
     },
     danger: {
-        bg: 'bg-red-50 text-red-900 border-red-200 dark:bg-red-950/95 dark:text-red-100 dark:border-red-800/80',
-        arrowBg: 'bg-red-50 border-red-200 dark:bg-red-950/95 dark:border-red-800/80'
+        bg: 'bg-red-600/90 text-white border-red-500/40 dark:bg-red-700/90 dark:text-white dark:border-red-500/40',
+        arrowBg: 'bg-red-600/90 border-red-500/40 dark:bg-red-700/90 dark:border-red-500/40'
     },
     success: {
-        bg: 'bg-emerald-50 text-emerald-900 border-emerald-200 dark:bg-emerald-950/95 dark:text-emerald-100 dark:border-emerald-800/80',
-        arrowBg: 'bg-emerald-50 border-emerald-200 dark:bg-emerald-950/95 dark:border-emerald-800/80'
+        bg: 'bg-emerald-600/90 text-white border-emerald-500/40 dark:bg-emerald-700/90 dark:text-white dark:border-emerald-500/40',
+        arrowBg: 'bg-emerald-600/90 border-emerald-500/40 dark:bg-emerald-700/90 dark:border-emerald-500/40'
     },
     warning: {
-        bg: 'bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-950/95 dark:text-amber-100 dark:border-amber-800/80',
-        arrowBg: 'bg-amber-50 border-amber-200 dark:bg-amber-950/95 dark:border-amber-800/80'
+        bg: 'bg-amber-500/90 text-black/90 border-amber-400/40 dark:bg-amber-600/90 dark:text-white dark:border-amber-400/40',
+        arrowBg: 'bg-amber-500/90 border-amber-400/40 dark:bg-amber-600/90 dark:border-amber-400/40'
     },
     info: {
-        bg: 'bg-sky-50 text-sky-900 border-sky-200 dark:bg-sky-950/95 dark:text-sky-100 dark:border-sky-800/80',
-        arrowBg: 'bg-sky-50 border-sky-200 dark:bg-sky-950/95 dark:border-sky-800/80'
+        bg: 'bg-sky-600/90 text-white border-sky-500/40 dark:bg-sky-700/90 dark:text-white dark:border-sky-500/40',
+        arrowBg: 'bg-sky-600/90 border-sky-500/40 dark:bg-sky-700/90 dark:border-sky-500/40'
     }
 };
 
@@ -382,6 +435,9 @@ const aliasMap = {
 };
 
 function getTheme(modifiers) {
+    const userThemes = (window.vkmConfig && window.vkmConfig.tooltip && window.vkmConfig.tooltip.themes) || {};
+    const themeMap = { ...defaultThemeMap, ...userThemes };
+
     for (const mod of modifiers) {
         if (themeMap[mod]) return themeMap[mod];
         if (aliasMap[mod] && themeMap[aliasMap[mod]]) return themeMap[aliasMap[mod]];

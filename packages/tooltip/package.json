@@ -10,7 +10,7 @@
   "author": "Vasilis Milopoulos",
   "license": "MIT",
   "main": "dist/module.cjs.js",
-  "module": "dist/module.esm.js",
+  "module": "src/index.js",
   "unpkg": "dist/cdn.min.js",
   "dependencies": {},
   "peerDependencies": {

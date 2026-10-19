@@ -1,0 +1,71 @@
+/* Tooltip Teleported Wrapper */
+.vkm-tooltip-wrapper {
+    @apply fixed z-[99999] top-0 left-0 transition-opacity duration-150 ease-out opacity-0;
+}
+.vkm-tooltip-wrapper.show {
+    @apply opacity-100;
+}
+
+/* Tooltip Card Surface */
+.vkm-tooltip-card {
+    @apply relative rounded-lg shadow-xl border backdrop-blur-md transition-all duration-150 ease-out transform scale-95 opacity-0;
+}
+.vkm-tooltip-card.show {
+    @apply scale-100 opacity-100;
+}
+
+/* Sizing variations */
+.vkm-tooltip-text {
+    @apply px-2.5 py-1 text-xs font-medium whitespace-nowrap;
+}
+.vkm-tooltip-rich {
+    @apply p-3 text-sm;
+}
+
+/* Rotating Square Arrow */
+.vkm-tooltip-arrow {
+    @apply absolute w-2 h-2 rotate-45 pointer-events-none;
+}
+
+/* Translucent themes matching x-form design language */
+.vkm-tooltip-dark {
+    @apply bg-black/90 dark:bg-black/90 text-white/90 border-white/20;
+}
+.vkm-tooltip-arrow-dark {
+    @apply bg-black/90 border-white/20;
+}
+
+.vkm-tooltip-light {
+    @apply bg-white/95 text-black/85 border-black/20 dark:bg-white/95 dark:text-black/85 dark:border-black/20;
+}
+.vkm-tooltip-arrow-light {
+    @apply bg-white/95 border-black/20 dark:bg-white/95 dark:border-black/20;
+}
+
+.vkm-tooltip-danger {
+    @apply bg-red-600/90 text-white border-red-500/40;
+}
+.vkm-tooltip-arrow-danger {
+    @apply bg-red-600/90 border-red-500/40;
+}
+
+.vkm-tooltip-success {
+    @apply bg-emerald-600/90 text-white border-emerald-500/40;
+}
+.vkm-tooltip-arrow-success {
+    @apply bg-emerald-600/90 border-emerald-500/40;
+}
+
+.vkm-tooltip-warning {
+    @apply bg-amber-500/90 text-black/90 border-amber-400/40 dark:bg-amber-600/90 dark:text-white dark:border-amber-400/40;
+}
+.vkm-tooltip-arrow-warning {
+    @apply bg-amber-500/90 border-amber-400/40 dark:bg-amber-600/90 dark:border-amber-400/40;
+}
+
+.vkm-tooltip-info {
+    @apply bg-sky-600/90 text-white border-sky-500/40;
+}
+.vkm-tooltip-arrow-info {
+    @apply bg-sky-600/90 border-sky-500/40;
+}
